@@ -4,13 +4,25 @@ from rest_framework_simplejwt.views import TokenRefreshView
 # Import existing views
 from .views import LoginView, LogoutView, CurrentUserView, ChangePasswordView
 
-# Import new dashboard views
+# Import dashboard views (Phase 2)
 from .dashboard_views import (
     DashboardOverviewView,
     DashboardStatsView,
     RecentLeadsView,
     SystemStatusView,
     AnalyticsView
+)
+
+# Import homepage views (Phase 3)
+from .homepage_views import (
+    HomePageContentView,
+    HeroSectionView,
+    StatisticsSectionView,
+    FooterInfoView,
+    FeaturedProjectsListView,
+    FeaturedProjectDetailView,
+    TestimonialsDisplayView,
+    CompleteHomePageView
 )
 
 urlpatterns = [
@@ -27,4 +39,14 @@ urlpatterns = [
     path('dashboard/recent-leads/', RecentLeadsView.as_view(), name='recent_leads'),
     path('dashboard/system-status/', SystemStatusView.as_view(), name='system_status'),
     path('dashboard/analytics/', AnalyticsView.as_view(), name='analytics'),
+
+    # Homepage endpoints (Phase 3)
+    path('homepage/', CompleteHomePageView.as_view(), name='complete_homepage'),
+    path('homepage/content/', HomePageContentView.as_view(), name='homepage_content'),
+    path('homepage/hero/', HeroSectionView.as_view(), name='hero_section'),
+    path('homepage/statistics/', StatisticsSectionView.as_view(), name='statistics_section'),
+    path('homepage/footer/', FooterInfoView.as_view(), name='footer_info'),
+    path('homepage/featured-projects/', FeaturedProjectsListView.as_view(), name='featured_projects_list'),
+    path('homepage/featured-projects/<int:pk>/', FeaturedProjectDetailView.as_view(), name='featured_project_detail'),
+    path('homepage/testimonials/', TestimonialsDisplayView.as_view(), name='testimonials_display'),
 ]
