@@ -95,6 +95,134 @@ python manage.py runserver
 ### Testimonials
 - `GET /api/homepage/testimonials/?limit=10` - Get active testimonials for homepage (public, default: 10, max: 20)
 
+## Phase 4 Endpoints (Projects Management - Full CRUD)
+
+### Main Project CRUD
+- `GET /api/projects/` - List all projects (public, with filtering, search, sort, pagination)
+- `POST /api/projects/` - Create new project (admin)
+- `GET /api/projects/{id}/` - Get project details (public, increments view count)
+- `PUT /api/projects/{id}/` - Update project (admin, partial updates supported)
+- `DELETE /api/projects/{id}/` - Delete project (admin, soft delete)
+
+### Query Parameters for Project List
+- `status` - Filter by status (upcoming/ongoing/completed)
+- `is_featured` - Filter by featured status (true/false)
+- `search` - Search in title, location, RERA number, description
+- `sort_by` - Sort field (created_at, updated_at, title, status, view_count)
+- `sort_order` - Sort direction (asc/desc)
+- `page` - Page number
+- `page_size` - Items per page (10/25/50/100)
+- `include_deleted` - Include soft-deleted projects (admin only)
+
+### Gallery Management
+- `GET /api/projects/{id}/gallery/` - Get all gallery images
+- `POST /api/projects/{id}/gallery/` - Add gallery image
+- `PUT /api/projects/{id}/gallery/{image_id}/` - Update gallery image
+- `DELETE /api/projects/{id}/gallery/{image_id}/` - Delete gallery image
+
+### Floor Plans Management
+- `GET /api/projects/{id}/floor-plans/` - Get all floor plans
+- `POST /api/projects/{id}/floor-plans/` - Add floor plan
+- `PUT /api/projects/{id}/floor-plans/{plan_id}/` - Update floor plan
+- `DELETE /api/projects/{id}/floor-plans/{plan_id}/` - Delete floor plan
+
+### Project Actions
+- `POST /api/projects/{id}/restore/` - Restore soft-deleted project
+- `POST /api/projects/{id}/clone/` - Clone/duplicate project
+
+### Bulk Actions
+- `POST /api/projects/bulk-actions/` - Perform bulk actions
+  - Actions: delete, restore, feature, unfeature, change_status
+  - Body: `{"project_ids": [1,2,3], "action": "delete"}`
+
+### Export/Import
+- `GET /api/projects/export/` - Export projects to CSV
+
+### Reference Data
+- `GET /api/projects/configurations/` - Get available configurations (public)
+- `GET /api/projects/amenities/` - Get available amenities (public)
+
+### Project Configuration Options
+- 1BHK (`1bhk`)
+- 2BHK (`2bhk`)
+- 3BHK (`3bhk`)
+- 4BHK (`4bhk`)
+- Villa (`villa`)
+- Duplex (`duplex`)
+
+### Project Amenity Options
+- Swimming Pool (`swimming_pool`)
+- Children's Play Area (`childrens_play_area`)
+- Security (`security`)
+- Parking (`parking`)
+- Jogging Track (`jogging_track`)
+- Gym (`gym`)
+- Clubhouse (`clubhouse`)
+- Power Backup (`power_backup`)
+- Garden (`garden`)
+- Community Hall (`community_hall`)
+
+### Example: Create Project Request
+```json
+{
+  "title": "Green Valley Phase 3",
+  "location": "Karimnagar, Telangana",
+  "rera_number": "P02400012345",
+  "description": "Premium residential project with modern amenities",
+  "status": "upcoming",
+  "hero_image_url": "https://example.com/hero.jpg",
+  "brochure_url": "https://example.com/brochure.pdf",
+  "configurations_list": ["2bhk", "3bhk"],
+  "amenities_list": ["swimming_pool", "gym", "parking", "security"],
+  "is_featured": true
+}
+```
+
+### Example: Project Detail Response
+```json
+{
+  "success": true,
+  "message": "Project retrieved successfully",
+  "data": {
+    "id": 1,
+    "title": "Green Valley Phase 2",
+    "slug": "green-valley-phase-2",
+    "location": "Karimnagar, Telangana",
+    "rera_number": "P02400004567",
+    "description": "Premium residential project...",
+    "status": "upcoming",
+    "hero_image": "https://example.com/hero.jpg",
+    "brochure": "https://example.com/brochure.pdf",
+    "configurations": {"2bhk": true, "3bhk": true},
+    "configurations_list": ["2bhk", "3bhk"],
+    "amenities": {"swimming_pool": true, "gym": true},
+    "amenities_list": ["swimming_pool", "gym"],
+    "is_featured": true,
+    "view_count": 150,
+    "gallery_images": [
+      {
+        "id": 1,
+        "image": "https://example.com/gallery1.jpg",
+        "caption": "Exterior View",
+        "display_order": 1
+      }
+    ],
+    "floor_plans": [
+      {
+        "id": 1,
+        "title": "2BHK Floor Plan",
+        "file_path": "https://example.com/2bhk-plan.pdf",
+        "display_order": 1
+      }
+    ],
+    "leads_count": 5,
+    "testimonials_count": 2,
+    "created_by_name": "HSR Admin",
+    "created_at": "2025-11-16T10:00:00Z"
+  }
+}
+```
+
 ### Complete Homepage Response Example
 ```json
 {
@@ -240,7 +368,7 @@ See `.env.example` for all available configuration options.
 - ✅ Phase 1: Authentication & Core Infrastructure (Complete)
 - ✅ Phase 2: Dashboard & Analytics (Complete)
 - ✅ Phase 3: Home Page Content Management (Complete)
-- Phase 4: Projects Management
+- ✅ Phase 4: Projects Management - Full CRUD (Complete)
 - Phase 5: Testimonials & Leads Management
 - Phase 6: Contact Settings & System Configuration
 
@@ -263,3 +391,15 @@ python manage.py setup_homepage
 ```
 
 This creates the home page content singleton with default values for hero section, statistics, and footer information.
+
+To create sample projects with complete data (gallery images, floor plans, configurations, amenities):
+```bash
+python manage.py create_sample_projects
+```
+
+This creates:
+- 5 sample projects with complete data
+- Gallery images for each project (3 images per project)
+- Floor plans for each project (up to 2 floor plans)
+- Configurations (1BHK, 2BHK, 3BHK, 4BHK, Villa, Duplex)
+- Amenities (Swimming Pool, Gym, Parking, etc.)
