@@ -1,9 +1,12 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.utils.html import format_html
+from django.utils import timezone
 from .models import (
     AdminUser, Project, Lead, Testimonial, SystemStatus,
     HomePageContent, FeaturedProject,
-    ProjectGalleryImage, ProjectFloorPlan
+    ProjectGalleryImage, ProjectFloorPlan,
+    ContactSettings
 )
 
 
@@ -217,16 +220,106 @@ class TestimonialAdmin(admin.ModelAdmin):
 
 @admin.register(SystemStatus)
 class SystemStatusAdmin(admin.ModelAdmin):
-    """Admin for SystemStatus model."""
-    list_display = ['website_status', 'whatsapp_integration_active', 'contact_forms_working', 'last_backup_at']
-    readonly_fields = ['created_at', 'updated_at']
+    """Enhanced admin for SystemStatus model (Phase 6)."""
+
+    list_display = [
+        'site_name', 'website_status_display', 'maintenance_mode_display',
+        'last_backup_at', 'auto_backup_enabled'
+    ]
+
+    fieldsets = (
+        ('Site Configuration', {
+            'fields': (
+                ('site_name', 'site_url'),
+            )
+        }),
+        ('System Health', {
+            'fields': (
+                'website_status',
+                'whatsapp_integration_active',
+                'contact_forms_working',
+            )
+        }),
+        ('Backup Configuration', {
+            'fields': (
+                'auto_backup_enabled',
+                'last_backup_at',
+            )
+        }),
+        ('Session & Security', {
+            'fields': (
+                'session_timeout',
+            )
+        }),
+        ('Maintenance Mode', {
+            'fields': (
+                'maintenance_mode',
+                'maintenance_message',
+            )
+        }),
+        ('Notifications', {
+            'fields': (
+                'email_notifications_enabled',
+                'notification_email',
+            )
+        }),
+        ('SEO Settings', {
+            'fields': (
+                'meta_title',
+                'meta_description',
+                'meta_keywords',
+            ),
+            'classes': ('collapse',)
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+    readonly_fields = ['last_backup_at', 'created_at', 'updated_at']
+
+    def website_status_display(self, obj):
+        """Display website status with color."""
+        if obj.website_status:
+            return format_html('<span style="color: green;">●</span> Online')
+        return format_html('<span style="color: red;">●</span> Offline')
+    website_status_display.short_description = 'Website Status'
+
+    def maintenance_mode_display(self, obj):
+        """Display maintenance mode with color."""
+        if obj.maintenance_mode:
+            return format_html('<span style="color: orange;">●</span> Enabled')
+        return format_html('<span style="color: green;">●</span> Disabled')
+    maintenance_mode_display.short_description = 'Maintenance'
+
+    actions = ['trigger_backup_action', 'enable_maintenance', 'disable_maintenance']
+
+    def trigger_backup_action(self, request, queryset):
+        """Trigger backup for selected system status."""
+        for obj in queryset:
+            obj.trigger_backup()
+        self.message_user(request, f'Backup triggered for {queryset.count()} system(s).')
+    trigger_backup_action.short_description = 'Trigger backup'
+
+    def enable_maintenance(self, request, queryset):
+        """Enable maintenance mode."""
+        count = queryset.update(maintenance_mode=True)
+        self.message_user(request, f'Maintenance mode enabled for {count} system(s).')
+    enable_maintenance.short_description = 'Enable maintenance mode'
+
+    def disable_maintenance(self, request, queryset):
+        """Disable maintenance mode."""
+        count = queryset.update(maintenance_mode=False)
+        self.message_user(request, f'Maintenance mode disabled for {count} system(s).')
+    disable_maintenance.short_description = 'Disable maintenance mode'
 
     def has_add_permission(self, request):
-        # Prevent creating multiple system status records
+        # Only allow one instance
         return not SystemStatus.objects.exists()
 
     def has_delete_permission(self, request, obj=None):
-        # Prevent deleting system status
+        # Prevent deletion
         return False
 
 
@@ -295,3 +388,64 @@ class FeaturedProjectAdmin(admin.ModelAdmin):
     ordering = ['display_order', '-created_at']
     readonly_fields = ['created_at', 'updated_at']
     autocomplete_fields = ['project']
+
+
+@admin.register(ContactSettings)
+class ContactSettingsAdmin(admin.ModelAdmin):
+    """Admin for ContactSettings model (Phase 6)."""
+
+    fieldsets = (
+        ('WhatsApp Configuration', {
+            'fields': (
+                'whatsapp_enabled',
+                ('whatsapp_number', 'whatsapp_business_hours'),
+                'whatsapp_auto_reply'
+            )
+        }),
+        ('Phone Numbers', {
+            'fields': (
+                ('primary_phone', 'secondary_phone'),
+                ('toll_free_number', 'phone_business_hours'),
+            )
+        }),
+        ('Email Settings', {
+            'fields': (
+                ('info_email', 'sales_email', 'support_email'),
+                'email_auto_reply_enabled',
+                'email_auto_reply_subject',
+                'email_auto_reply_message'
+            )
+        }),
+        ('Office Address', {
+            'fields': (
+                'street_address',
+                ('area_locality', 'city'),
+                ('state', 'pincode'),
+                'country',
+                'google_maps_embed'
+            )
+        }),
+        ('Social Media Links', {
+            'fields': (
+                'facebook_url',
+                'instagram_url',
+                'twitter_url',
+                'linkedin_url',
+                'youtube_url'
+            )
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+    readonly_fields = ['created_at', 'updated_at']
+
+    def has_add_permission(self, request):
+        # Only allow one instance
+        return not ContactSettings.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        # Prevent deletion
+        return False

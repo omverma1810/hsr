@@ -9,7 +9,7 @@ from .dashboard_views import (
     DashboardOverviewView,
     DashboardStatsView,
     RecentLeadsView,
-    SystemStatusView,
+    SystemStatusView as DashboardSystemStatusView,
     AnalyticsView
 )
 
@@ -61,6 +61,19 @@ from .lead_views import (
     ExportLeadsView
 )
 
+# Import contact settings views (Phase 6)
+from .contact_views import (
+    ContactSettingsView,
+    WhatsAppConfigView,
+    PhoneNumbersView,
+    EmailSettingsView,
+    AddressMapView,
+    SocialMediaView,
+    PublicContactInfoView,
+    SystemStatusView,
+    TriggerBackupView
+)
+
 urlpatterns = [
     # Authentication endpoints (Phase 1)
     path('auth/login/', LoginView.as_view(), name='login'),
@@ -76,7 +89,7 @@ urlpatterns = [
     path('dashboard/', DashboardOverviewView.as_view(), name='dashboard_overview'),
     path('dashboard/stats/', DashboardStatsView.as_view(), name='dashboard_stats'),
     path('dashboard/recent-leads/', RecentLeadsView.as_view(), name='recent_leads'),
-    path('dashboard/system-status/', SystemStatusView.as_view(), name='system_status'),
+    path('dashboard/system-status/', DashboardSystemStatusView.as_view(), name='dashboard_system_status'),
     path('dashboard/analytics/', AnalyticsView.as_view(), name='analytics'),
 
     # Homepage endpoints (Phase 3)
@@ -129,4 +142,22 @@ urlpatterns = [
     path('leads/statistics/', LeadStatisticsView.as_view(), name='lead_statistics'),
     path('leads/bulk-actions/', BulkLeadActionsView.as_view(), name='lead_bulk_actions'),
     path('leads/export/', ExportLeadsView.as_view(), name='leads_export'),
+
+    # Contact Settings & System Configuration endpoints (Phase 6)
+    # Complete contact settings
+    path('contact-settings/', ContactSettingsView.as_view(), name='contact_settings'),
+
+    # Individual contact setting sections
+    path('contact-settings/whatsapp/', WhatsAppConfigView.as_view(), name='whatsapp_config'),
+    path('contact-settings/phone/', PhoneNumbersView.as_view(), name='phone_numbers'),
+    path('contact-settings/email/', EmailSettingsView.as_view(), name='email_settings'),
+    path('contact-settings/address/', AddressMapView.as_view(), name='address_map'),
+    path('contact-settings/social-media/', SocialMediaView.as_view(), name='social_media'),
+
+    # Public contact info (optimized)
+    path('contact-info/', PublicContactInfoView.as_view(), name='public_contact_info'),
+
+    # System configuration
+    path('system/', SystemStatusView.as_view(), name='system_status'),
+    path('system/backup/', TriggerBackupView.as_view(), name='trigger_backup'),
 ]
