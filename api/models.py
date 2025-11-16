@@ -496,21 +496,84 @@ class Testimonial(TimeStampedModel, SoftDeleteModel):
 
 
 class SystemStatus(TimeStampedModel):
-    """Model to track system status and configurations."""
+    """Enhanced model to track system status and configurations (Phase 6)."""
+
+    # Site Configuration
+    site_name = models.CharField(
+        max_length=255,
+        default='HSR Green Homes',
+        help_text='Website/company name'
+    )
+    site_url = models.URLField(
+        default='https://hsrgreenhomes.com',
+        help_text='Primary website URL'
+    )
 
     # System Health
-    website_status = models.BooleanField(default=True)
-    whatsapp_integration_active = models.BooleanField(default=True)
-    contact_forms_working = models.BooleanField(default=True)
+    website_status = models.BooleanField(
+        default=True,
+        help_text='Website online/offline status'
+    )
+    whatsapp_integration_active = models.BooleanField(
+        default=True,
+        help_text='WhatsApp integration active status'
+    )
+    contact_forms_working = models.BooleanField(
+        default=True,
+        help_text='Contact forms working status'
+    )
 
     # Backup Information
-    last_backup_at = models.DateTimeField(auto_now_add=True)
+    last_backup_at = models.DateTimeField(
+        auto_now_add=True,
+        help_text='Last backup timestamp'
+    )
+    auto_backup_enabled = models.BooleanField(
+        default=True,
+        help_text='Enable automatic daily backups'
+    )
 
     # Session Configuration
-    session_timeout = models.IntegerField(default=60, help_text="Session timeout in minutes")
+    session_timeout = models.IntegerField(
+        default=60,
+        help_text='Session timeout in minutes'
+    )
 
     # Maintenance Mode
-    maintenance_mode = models.BooleanField(default=False)
+    maintenance_mode = models.BooleanField(
+        default=False,
+        help_text='Enable maintenance mode (disables public access)'
+    )
+    maintenance_message = models.TextField(
+        default='We are currently performing maintenance. Please check back soon.',
+        help_text='Message to display during maintenance'
+    )
+
+    # Notifications
+    email_notifications_enabled = models.BooleanField(
+        default=True,
+        help_text='Receive email notifications for new leads'
+    )
+    notification_email = models.EmailField(
+        default='admin@hsrgreenhomes.com',
+        help_text='Email address to receive notifications'
+    )
+
+    # SEO Settings
+    meta_title = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text='Default meta title for SEO'
+    )
+    meta_description = models.TextField(
+        blank=True,
+        help_text='Default meta description for SEO'
+    )
+    meta_keywords = models.CharField(
+        max_length=500,
+        blank=True,
+        help_text='Default meta keywords for SEO'
+    )
 
     class Meta:
         db_table = 'system_status'
@@ -518,13 +581,199 @@ class SystemStatus(TimeStampedModel):
         verbose_name_plural = 'System Status'
 
     def __str__(self):
-        return f"System Status - {self.updated_at}"
+        return f"System Status - {self.site_name}"
+
+    def save(self, *args, **kwargs):
+        """Ensure only one instance exists."""
+        if not self.pk and SystemStatus.objects.exists():
+            raise ValidationError('Only one SystemStatus instance is allowed.')
+        return super().save(*args, **kwargs)
 
     @classmethod
     def get_current(cls):
         """Get or create current system status."""
         status, created = cls.objects.get_or_create(id=1)
         return status
+
+    def trigger_backup(self):
+        """Trigger a manual backup."""
+        self.last_backup_at = timezone.now()
+        self.save(update_fields=['last_backup_at'])
+
+
+class ContactSettings(TimeStampedModel):
+    """
+    Model for contact settings management (Phase 6).
+    Single instance model - only one record should exist.
+    """
+
+    # WhatsApp Configuration
+    whatsapp_enabled = models.BooleanField(
+        default=True,
+        help_text='Enable WhatsApp integration'
+    )
+    whatsapp_number = models.CharField(
+        max_length=20,
+        default='+919876543210',
+        help_text='WhatsApp business number'
+    )
+    whatsapp_business_hours = models.CharField(
+        max_length=100,
+        default='9:00 AM - 8:00 PM',
+        help_text='WhatsApp availability hours'
+    )
+    whatsapp_auto_reply = models.TextField(
+        default='Hello! Thank you for contacting HSR Green Homes. We will get back to you shortly.',
+        help_text='Auto-reply message for WhatsApp'
+    )
+
+    # Phone Numbers
+    primary_phone = models.CharField(
+        max_length=20,
+        default='+919876543210',
+        help_text='Primary contact phone number'
+    )
+    secondary_phone = models.CharField(
+        max_length=20,
+        blank=True,
+        default='+919876543211',
+        help_text='Secondary contact phone number'
+    )
+    toll_free_number = models.CharField(
+        max_length=20,
+        blank=True,
+        default='1800-123-4567',
+        help_text='Toll-free number'
+    )
+    phone_business_hours = models.CharField(
+        max_length=100,
+        default='9:00 AM - 6:00 PM',
+        help_text='Phone availability hours'
+    )
+
+    # Email Settings
+    info_email = models.EmailField(
+        default='info@hsrgreenhomes.com',
+        help_text='General information email'
+    )
+    sales_email = models.EmailField(
+        default='sales@hsrgreenhomes.com',
+        help_text='Sales inquiries email'
+    )
+    support_email = models.EmailField(
+        default='support@hsrgreenhomes.com',
+        help_text='Customer support email'
+    )
+
+    # Email Auto Reply
+    email_auto_reply_enabled = models.BooleanField(
+        default=True,
+        help_text='Enable email auto-reply'
+    )
+    email_auto_reply_subject = models.CharField(
+        max_length=255,
+        default='Thank you for contacting HSR Green Homes',
+        help_text='Auto-reply email subject'
+    )
+    email_auto_reply_message = models.TextField(
+        default='We have received your inquiry and will respond within 24 hours.',
+        help_text='Auto-reply email message'
+    )
+
+    # Office Address
+    street_address = models.CharField(
+        max_length=255,
+        default='HSR Green Homes Building',
+        help_text='Street address'
+    )
+    area_locality = models.CharField(
+        max_length=255,
+        default='Karimnagar',
+        help_text='Area or locality'
+    )
+    city = models.CharField(
+        max_length=100,
+        default='Karimnagar',
+        help_text='City'
+    )
+    state = models.CharField(
+        max_length=100,
+        default='Telangana',
+        help_text='State'
+    )
+    pincode = models.CharField(
+        max_length=10,
+        default='505001',
+        help_text='Pincode/ZIP code'
+    )
+    country = models.CharField(
+        max_length=100,
+        default='India',
+        help_text='Country'
+    )
+    google_maps_embed = models.TextField(
+        blank=True,
+        help_text='Google Maps iframe embed code'
+    )
+
+    # Social Media Links
+    facebook_url = models.URLField(
+        blank=True,
+        default='https://facebook.com/hsrgreenhomes',
+        help_text='Facebook page URL'
+    )
+    instagram_url = models.URLField(
+        blank=True,
+        default='https://instagram.com/hsrgreenhomes',
+        help_text='Instagram profile URL'
+    )
+    twitter_url = models.URLField(
+        blank=True,
+        default='https://twitter.com/hsrgreenhomes',
+        help_text='Twitter profile URL'
+    )
+    linkedin_url = models.URLField(
+        blank=True,
+        default='https://linkedin.com/company/hsrgreenhomes',
+        help_text='LinkedIn company URL'
+    )
+    youtube_url = models.URLField(
+        blank=True,
+        default='https://youtube.com/hsrgreenhomes',
+        help_text='YouTube channel URL'
+    )
+
+    class Meta:
+        db_table = 'contact_settings'
+        verbose_name = 'Contact Settings'
+        verbose_name_plural = 'Contact Settings'
+
+    def __str__(self):
+        return f"Contact Settings - Last Updated: {self.updated_at}"
+
+    def save(self, *args, **kwargs):
+        """Ensure only one instance exists."""
+        if not self.pk and ContactSettings.objects.exists():
+            raise ValidationError('Only one ContactSettings instance is allowed.')
+        return super().save(*args, **kwargs)
+
+    @classmethod
+    def get_current(cls):
+        """Get or create the single contact settings instance."""
+        settings, created = cls.objects.get_or_create(id=1)
+        return settings
+
+    def get_full_address(self):
+        """Return formatted full address."""
+        parts = [
+            self.street_address,
+            self.area_locality,
+            self.city,
+            self.state,
+            self.pincode,
+            self.country
+        ]
+        return ', '.join(filter(None, parts))
 
 
 class HomePageContent(TimeStampedModel):

@@ -532,6 +532,174 @@ See `.env.example` for all available configuration options.
 }
 ```
 
+## Phase 6 Endpoints (Contact Settings & System Configuration)
+
+### Contact Settings Management
+
+#### Complete Contact Settings
+- `GET /api/contact-settings/` - Get complete contact settings (public access with full data)
+- `PUT /api/contact-settings/` - Update contact settings (admin only, partial updates supported)
+
+#### Individual Setting Sections
+- `GET /api/contact-settings/whatsapp/` - Get WhatsApp configuration (public)
+- `PUT /api/contact-settings/whatsapp/` - Update WhatsApp configuration (admin only)
+- `GET /api/contact-settings/phone/` - Get phone numbers (public)
+- `PUT /api/contact-settings/phone/` - Update phone numbers (admin only)
+- `GET /api/contact-settings/email/` - Get email settings (public)
+- `PUT /api/contact-settings/email/` - Update email settings (admin only)
+- `GET /api/contact-settings/address/` - Get office address and map (public)
+- `PUT /api/contact-settings/address/` - Update office address and map (admin only)
+- `GET /api/contact-settings/social-media/` - Get social media links (public)
+- `PUT /api/contact-settings/social-media/` - Update social media links (admin only)
+
+#### Optimized Public Contact Info
+- `GET /api/contact-info/` - **Get all contact information in single call** (public access) - Optimized endpoint with WhatsApp, phone, email, address, and social media
+
+### System Configuration
+- `GET /api/system/` - Get system status and configuration (public: limited data, admin: full data)
+- `PUT /api/system/` - Update system status and configuration (admin only)
+- `POST /api/system/backup/` - Trigger manual backup (admin only)
+
+### Example: WhatsApp Configuration Response
+```json
+{
+  "success": true,
+  "message": "WhatsApp configuration retrieved successfully",
+  "data": {
+    "whatsapp_enabled": true,
+    "whatsapp_number": "+919876543210",
+    "whatsapp_business_hours": "9:00 AM - 8:00 PM",
+    "whatsapp_auto_reply": "Hello! Thank you for contacting HSR Green Homes. We will get back to you shortly."
+  }
+}
+```
+
+### Example: Public Contact Info Response (Complete)
+```json
+{
+  "success": true,
+  "message": "Public contact information retrieved successfully",
+  "data": {
+    "whatsapp": {
+      "number": "+919876543210",
+      "business_hours": "9:00 AM - 8:00 PM"
+    },
+    "phone": {
+      "primary": "+919876543210",
+      "secondary": "+919876543211",
+      "toll_free": "1800-123-4567",
+      "business_hours": "9:00 AM - 6:00 PM (Mon-Sat)"
+    },
+    "email": {
+      "info": "info@hsrgreenhomes.com",
+      "sales": "sales@hsrgreenhomes.com",
+      "support": "support@hsrgreenhomes.com"
+    },
+    "address": {
+      "street": "HSR Green Homes Building",
+      "area": "Bommakal",
+      "city": "Karimnagar",
+      "state": "Telangana",
+      "pincode": "505001",
+      "country": "India",
+      "full_address": "HSR Green Homes Building, Bommakal, Karimnagar, Telangana, 505001, India",
+      "map_embed": "https://maps.google.com/embed/..."
+    },
+    "social_media": {
+      "facebook": "https://facebook.com/hsrgreenhomes",
+      "instagram": "https://instagram.com/hsrgreenhomes",
+      "twitter": "https://twitter.com/hsrgreenhomes",
+      "linkedin": "https://linkedin.com/company/hsrgreenhomes",
+      "youtube": "https://youtube.com/@hsrgreenhomes"
+    }
+  }
+}
+```
+
+### Example: Update Contact Settings Request
+```json
+{
+  "whatsapp_enabled": true,
+  "whatsapp_number": "+919876543210",
+  "primary_phone": "+919876543210",
+  "info_email": "info@hsrgreenhomes.com",
+  "city": "Karimnagar",
+  "facebook_url": "https://facebook.com/hsrgreenhomes"
+}
+```
+
+### Example: System Status Response (Admin)
+```json
+{
+  "success": true,
+  "message": "System status retrieved successfully",
+  "data": {
+    "id": 1,
+    "site_name": "HSR Green Homes",
+    "site_url": "https://hsrgreenhomes.com",
+    "website_status": true,
+    "whatsapp_integration_active": true,
+    "contact_forms_working": true,
+    "last_backup_at": "2025-11-16T03:00:00Z",
+    "auto_backup_enabled": true,
+    "session_timeout": 30,
+    "maintenance_mode": false,
+    "maintenance_message": "We are currently performing maintenance. Please check back soon.",
+    "email_notifications_enabled": true,
+    "notification_email": "admin@hsrgreenhomes.com",
+    "meta_title": "HSR Green Homes - Premium Real Estate in Karimnagar",
+    "meta_description": "Discover premium residential projects in Karimnagar with HSR Green Homes",
+    "meta_keywords": "real estate, karimnagar, residential projects, apartments",
+    "uptime_status": {
+      "website": "Online",
+      "whatsapp": "Active",
+      "forms": "Working",
+      "maintenance": "Disabled"
+    },
+    "created_at": "2025-11-16T00:00:00Z",
+    "updated_at": "2025-11-16T10:00:00Z"
+  }
+}
+```
+
+### Example: System Status Response (Public - Limited)
+```json
+{
+  "success": true,
+  "message": "System status retrieved successfully",
+  "data": {
+    "site_name": "HSR Green Homes",
+    "maintenance_mode": false,
+    "maintenance_message": null
+  }
+}
+```
+
+### Example: Trigger Backup Request
+```bash
+curl -X POST http://localhost:8000/api/system/backup/ \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+Response:
+```json
+{
+  "success": true,
+  "message": "Backup triggered successfully",
+  "data": {
+    "message": "Backup triggered successfully",
+    "timestamp": "2025-11-16T15:30:00Z"
+  }
+}
+```
+
+### Initialize Contact Settings
+```bash
+python manage.py setup_contact_settings
+```
+
+This creates the contact settings and system status singletons with default values for all contact information and system configuration.
+
 ## Development Phases
 
 - ✅ Phase 1: Authentication & Core Infrastructure (Complete)
@@ -539,7 +707,7 @@ See `.env.example` for all available configuration options.
 - ✅ Phase 3: Home Page Content Management (Complete)
 - ✅ Phase 4: Projects Management - Full CRUD (Complete)
 - ✅ Phase 5: Testimonials & Leads Management (Complete)
-- Phase 6: Contact Settings & System Configuration
+- ✅ Phase 6: Contact Settings & System Configuration (Complete)
 
 ## Sample Data
 
