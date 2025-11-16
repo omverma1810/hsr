@@ -65,6 +65,91 @@ python manage.py runserver
 - `PUT /api/dashboard/system-status/` - Update system status
 - `GET /api/dashboard/analytics/` - Detailed analytics and breakdowns
 
+## Phase 3 Endpoints (Home Page Content Management)
+
+### Homepage Content
+- `GET /api/homepage/` - **Complete homepage data in single call** (public access) - Optimized endpoint with hero, statistics, footer, featured projects, and testimonials
+- `GET /api/homepage/content/` - Get complete home page content (public)
+- `PUT /api/homepage/content/` - Update home page content (admin only)
+
+### Hero Section
+- `GET /api/homepage/hero/` - Get hero section (public)
+- `PUT /api/homepage/hero/` - Update hero section (admin only)
+
+### Statistics Section
+- `GET /api/homepage/statistics/` - Get statistics section (public)
+- `PUT /api/homepage/statistics/` - Update statistics section (admin only)
+
+### Footer Information
+- `GET /api/homepage/footer/` - Get footer information (public)
+- `PUT /api/homepage/footer/` - Update footer information (admin only)
+
+### Featured Projects
+- `GET /api/homepage/featured-projects/` - Get all active featured projects (public)
+- `GET /api/homepage/featured-projects/?all=true` - Get all featured projects including inactive (admin only)
+- `POST /api/homepage/featured-projects/` - Add a new featured project (admin only)
+- `GET /api/homepage/featured-projects/{id}/` - Get specific featured project (admin only)
+- `PUT /api/homepage/featured-projects/{id}/` - Update featured project (admin only)
+- `DELETE /api/homepage/featured-projects/{id}/` - Remove featured project (admin only)
+
+### Testimonials
+- `GET /api/homepage/testimonials/?limit=10` - Get active testimonials for homepage (public, default: 10, max: 20)
+
+### Complete Homepage Response Example
+```json
+{
+  "success": true,
+  "message": "Complete homepage data retrieved successfully",
+  "data": {
+    "hero_section": {
+      "hero_title": "Premium Living Spaces in Karimnagar",
+      "hero_subtitle": "Discover your dream home with HSR Green Homes - where quality meets comfort",
+      "hero_background_image": null,
+      "hero_cta_button_text": "Explore Projects"
+    },
+    "statistics": {
+      "experience": {"value": "15+", "label": "Years of Excellence"},
+      "projects": {"value": "50+", "label": "Projects Completed"},
+      "families": {"value": "2000+", "label": "Happy Families"},
+      "sqft": {"value": "10L+", "label": "Sq.Ft Delivered"}
+    },
+    "footer": {
+      "footer_office_address": "HSR Green Homes, Karimnagar, Telangana 505001",
+      "footer_phone_number": "+91 9876543210",
+      "footer_email": "info@hsrgreenhomes.com",
+      "footer_whatsapp_number": "+91 9876543210"
+    },
+    "featured_projects": [
+      {
+        "id": 1,
+        "project": {
+          "id": 1,
+          "title": "Green Valley Phase 2",
+          "location": "Karimnagar, Telangana",
+          "rera_number": "P02400004567",
+          "description": "Premium 2BHK and 3BHK apartments",
+          "status": "upcoming",
+          "hero_image": null
+        },
+        "display_order": 1,
+        "is_active": true
+      }
+    ],
+    "testimonials": [
+      {
+        "id": 1,
+        "customer_name": "Rajesh Kumar",
+        "project_title": "Green Valley Phase 2",
+        "project_location": "Karimnagar, Telangana",
+        "quote": "HSR Green Homes delivered exactly what they promised...",
+        "customer_photo": null,
+        "display_order": 1
+      }
+    ]
+  }
+}
+```
+
 ### Dashboard Response Example
 ```json
 {
@@ -154,7 +239,7 @@ See `.env.example` for all available configuration options.
 
 - ✅ Phase 1: Authentication & Core Infrastructure (Complete)
 - ✅ Phase 2: Dashboard & Analytics (Complete)
-- Phase 3: Home Page Content Management
+- ✅ Phase 3: Home Page Content Management (Complete)
 - Phase 4: Projects Management
 - Phase 5: Testimonials & Leads Management
 - Phase 6: Contact Settings & System Configuration
@@ -171,3 +256,10 @@ This creates:
 - 3 sample leads with different statuses
 - 3 sample testimonials
 - System status record
+
+To initialize homepage content:
+```bash
+python manage.py setup_homepage
+```
+
+This creates the home page content singleton with default values for hero section, statistics, and footer information.
