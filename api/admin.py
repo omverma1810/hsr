@@ -100,23 +100,119 @@ class ProjectAdmin(admin.ModelAdmin):
 
 @admin.register(Lead)
 class LeadAdmin(admin.ModelAdmin):
-    """Admin for Lead model."""
-    list_display = ['name', 'email', 'phone', 'project', 'status', 'source', 'created_at']
-    list_filter = ['status', 'source', 'created_at']
-    search_fields = ['name', 'email', 'phone']
+    """Enhanced admin for Lead model with Phase 5 fields."""
+    list_display = [
+        'name', 'email', 'phone', 'project', 'status',
+        'priority', 'source', 'next_follow_up', 'follow_up_count', 'created_at'
+    ]
+    list_filter = ['status', 'priority', 'source', 'preferred_contact_method', 'created_at']
+    search_fields = ['name', 'email', 'phone', 'notes']
     ordering = ['-created_at']
-    readonly_fields = ['created_at', 'updated_at']
+    readonly_fields = ['created_at', 'updated_at', 'contacted_at', 'follow_up_count']
     autocomplete_fields = ['project', 'contacted_by']
+
+    fieldsets = (
+        ('Contact Information', {
+            'fields': ('name', 'email', 'phone', 'preferred_contact_method')
+        }),
+        ('Lead Details', {
+            'fields': ('project', 'message', 'source', 'status', 'priority')
+        }),
+        ('Follow-up Management', {
+            'fields': ('next_follow_up', 'follow_up_count', 'notes')
+        }),
+        ('Tracking', {
+            'fields': ('contacted_at', 'contacted_by', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+        ('Soft Delete', {
+            'fields': ('is_deleted', 'deleted_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+    actions = ['mark_as_contacted', 'mark_as_qualified', 'mark_as_closed']
+
+    def mark_as_contacted(self, request, queryset):
+        """Mark selected leads as contacted."""
+        updated = 0
+        for lead in queryset:
+            if lead.status != 'contacted':
+                lead.mark_contacted(admin_user=request.user)
+                updated += 1
+        self.message_user(request, f'{updated} leads marked as contacted.')
+    mark_as_contacted.short_description = 'Mark as Contacted'
+
+    def mark_as_qualified(self, request, queryset):
+        """Mark selected leads as qualified."""
+        updated = queryset.update(status='qualified')
+        self.message_user(request, f'{updated} leads marked as qualified.')
+    mark_as_qualified.short_description = 'Mark as Qualified'
+
+    def mark_as_closed(self, request, queryset):
+        """Mark selected leads as closed."""
+        updated = queryset.update(status='closed')
+        self.message_user(request, f'{updated} leads marked as closed.')
+    mark_as_closed.short_description = 'Mark as Closed'
 
 
 @admin.register(Testimonial)
 class TestimonialAdmin(admin.ModelAdmin):
-    """Admin for Testimonial model."""
-    list_display = ['customer_name', 'project', 'is_active', 'display_order', 'created_at']
-    list_filter = ['is_active', 'created_at']
+    """Enhanced admin for Testimonial model with Phase 5 fields."""
+    list_display = [
+        'customer_name', 'project', 'rating', 'verified',
+        'is_active', 'display_order', 'created_at'
+    ]
+    list_filter = ['is_active', 'verified', 'rating', 'created_at']
     search_fields = ['customer_name', 'quote']
     ordering = ['display_order', '-created_at']
     readonly_fields = ['created_at', 'updated_at']
+
+    fieldsets = (
+        ('Customer Information', {
+            'fields': ('customer_name', 'customer_photo', 'project')
+        }),
+        ('Testimonial Content', {
+            'fields': ('quote', 'rating', 'verified')
+        }),
+        ('Display Settings', {
+            'fields': ('is_active', 'display_order')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+        ('Soft Delete', {
+            'fields': ('is_deleted', 'deleted_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+    actions = ['mark_as_verified', 'mark_as_unverified', 'activate_testimonials', 'deactivate_testimonials']
+
+    def mark_as_verified(self, request, queryset):
+        """Mark selected testimonials as verified."""
+        updated = queryset.update(verified=True)
+        self.message_user(request, f'{updated} testimonials marked as verified.')
+    mark_as_verified.short_description = 'Mark as Verified'
+
+    def mark_as_unverified(self, request, queryset):
+        """Mark selected testimonials as unverified."""
+        updated = queryset.update(verified=False)
+        self.message_user(request, f'{updated} testimonials marked as unverified.')
+    mark_as_unverified.short_description = 'Mark as Unverified'
+
+    def activate_testimonials(self, request, queryset):
+        """Activate selected testimonials."""
+        updated = queryset.update(is_active=True)
+        self.message_user(request, f'{updated} testimonials activated.')
+    activate_testimonials.short_description = 'Activate Testimonials'
+
+    def deactivate_testimonials(self, request, queryset):
+        """Deactivate selected testimonials."""
+        updated = queryset.update(is_active=False)
+        self.message_user(request, f'{updated} testimonials deactivated.')
+    deactivate_testimonials.short_description = 'Deactivate Testimonials'
 
 
 @admin.register(SystemStatus)

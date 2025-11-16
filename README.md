@@ -363,13 +363,182 @@ hsr/
 
 See `.env.example` for all available configuration options.
 
+## Phase 5 Endpoints (Testimonials & Leads Management)
+
+### Testimonials Management
+- `GET /api/testimonials/` - List all testimonials (admin, with filtering, search, sort, pagination)
+- `POST /api/testimonials/` - Create new testimonial (admin only)
+- `GET /api/testimonials/{id}/` - Get testimonial details (admin only)
+- `PUT /api/testimonials/{id}/` - Update testimonial (admin only, partial updates supported)
+- `DELETE /api/testimonials/{id}/` - Delete testimonial (admin only, soft delete)
+- `POST /api/testimonials/{id}/restore/` - Restore soft-deleted testimonial (admin only)
+- `POST /api/testimonials/bulk-actions/` - Perform bulk actions (admin only)
+  - Actions: delete, restore, activate, deactivate, verify, unverify
+  - Body: `{"testimonial_ids": [1,2,3], "action": "verify"}`
+
+### Query Parameters for Testimonial List
+- `project` - Filter by project ID
+- `is_active` - Filter by active status (true/false)
+- `verified` - Filter by verified status (true/false)
+- `min_rating` - Filter by minimum rating (1-5)
+- `search` - Search in customer name, quote, project title
+- `sort_by` - Sort field (created_at, rating, display_order, customer_name)
+- `page` - Page number
+- `page_size` - Items per page (10/25/50/100)
+
+### Leads Management
+- `GET /api/leads/` - List all leads (admin only, with filtering, search, sort, pagination)
+- `POST /api/leads/` - Create new lead (public - contact form submission)
+- `GET /api/leads/{id}/` - Get lead details (admin only)
+- `PUT /api/leads/{id}/` - Update lead (admin only, partial updates supported)
+- `DELETE /api/leads/{id}/` - Delete lead (admin only, soft delete)
+- `POST /api/leads/{id}/status/` - Update lead status with tracking (admin only)
+- `POST /api/leads/{id}/notes/` - Add note to lead (admin only)
+- `POST /api/leads/{id}/restore/` - Restore soft-deleted lead (admin only)
+- `GET /api/leads/statistics/` - Get lead statistics and analytics (admin only)
+- `POST /api/leads/bulk-actions/` - Perform bulk actions (admin only)
+  - Actions: delete, restore, change_status, change_priority, assign_contact
+  - Body: `{"lead_ids": [1,2,3], "action": "change_status", "status": "qualified"}`
+- `GET /api/leads/export/` - Export leads to CSV (admin only)
+
+### Query Parameters for Lead List
+- `status` - Filter by status (new/contacted/qualified/closed)
+- `priority` - Filter by priority (low/medium/high/urgent)
+- `source` - Filter by source (contact_form/whatsapp/phone_call/walk_in)
+- `project` - Filter by project ID
+- `contacted_by` - Filter by admin user ID
+- `overdue_only` - Show only overdue follow-ups (true/false)
+- `search` - Search in name, email, phone, message, project title
+- `sort_by` - Sort field (created_at, priority, status, next_follow_up, name)
+- `page` - Page number
+- `page_size` - Items per page (10/25/50/100)
+
+### Example: Create Testimonial Request
+```json
+{
+  "customer_name": "Rajesh Kumar",
+  "project": 1,
+  "quote": "Excellent service and quality construction. Very happy with my new home!",
+  "rating": 5,
+  "verified": true,
+  "is_active": true,
+  "display_order": 1
+}
+```
+
+### Example: Testimonial Detail Response
+```json
+{
+  "success": true,
+  "message": "Testimonial retrieved successfully",
+  "data": {
+    "id": 1,
+    "customer_name": "Rajesh Kumar",
+    "project": 1,
+    "project_title": "Green Valley Phase 2",
+    "project_location": "Karimnagar, Telangana",
+    "project_status": "upcoming",
+    "quote": "Excellent service and quality construction. Very happy with my new home!",
+    "customer_photo": null,
+    "rating": 5,
+    "rating_stars": "★★★★★",
+    "verified": true,
+    "is_active": true,
+    "display_order": 1,
+    "created_at": "2025-11-16T10:00:00Z",
+    "updated_at": "2025-11-16T10:00:00Z"
+  }
+}
+```
+
+### Example: Create Lead Request (Public Contact Form)
+```json
+{
+  "name": "Priya Sharma",
+  "email": "priya@example.com",
+  "phone": "+919876543210",
+  "project": 1,
+  "message": "I am interested in 2BHK apartments. Please contact me.",
+  "source": "contact_form",
+  "preferred_contact_method": "phone"
+}
+```
+
+### Example: Lead Detail Response
+```json
+{
+  "success": true,
+  "message": "Lead retrieved successfully",
+  "data": {
+    "id": 1,
+    "name": "Priya Sharma",
+    "email": "priya@example.com",
+    "phone": "+919876543210",
+    "project": 1,
+    "project_title": "Green Valley Phase 2",
+    "project_location": "Karimnagar, Telangana",
+    "message": "I am interested in 2BHK apartments. Please contact me.",
+    "status": "contacted",
+    "status_color": "#F59E0B",
+    "priority": "medium",
+    "priority_color": "#F59E0B",
+    "source": "contact_form",
+    "preferred_contact_method": "phone",
+    "next_follow_up": "2025-11-18T10:00:00Z",
+    "follow_up_count": 2,
+    "contacted_at": "2025-11-16T11:00:00Z",
+    "contacted_by": 1,
+    "contacted_by_name": "HSR Admin",
+    "contacted_by_email": "admin@hsrgreenhomes.com",
+    "notes": "\n[2025-11-16 11:00:00] HSR Admin: Called customer and discussed 2BHK options\n[2025-11-16 14:30:00] HSR Admin: Sent brochure via email",
+    "time_ago": "2 hours ago",
+    "is_overdue": false,
+    "created_at": "2025-11-16T10:00:00Z",
+    "updated_at": "2025-11-16T14:30:00Z"
+  }
+}
+```
+
+### Example: Lead Statistics Response
+```json
+{
+  "success": true,
+  "message": "Lead statistics retrieved successfully",
+  "data": {
+    "total_leads": 45,
+    "new_leads": 15,
+    "contacted_leads": 20,
+    "qualified_leads": 8,
+    "closed_leads": 2,
+    "contact_rate": 44.44,
+    "qualification_rate": 17.78,
+    "close_rate": 4.44,
+    "urgent_leads": 3,
+    "high_priority_leads": 8,
+    "medium_priority_leads": 25,
+    "low_priority_leads": 9,
+    "leads_with_follow_up": 18,
+    "overdue_follow_ups": 5,
+    "source_breakdown": {
+      "contact_form": 28,
+      "whatsapp": 10,
+      "phone_call": 5,
+      "walk_in": 2
+    },
+    "leads_today": 3,
+    "leads_this_week": 12,
+    "leads_this_month": 45
+  }
+}
+```
+
 ## Development Phases
 
 - ✅ Phase 1: Authentication & Core Infrastructure (Complete)
 - ✅ Phase 2: Dashboard & Analytics (Complete)
 - ✅ Phase 3: Home Page Content Management (Complete)
 - ✅ Phase 4: Projects Management - Full CRUD (Complete)
-- Phase 5: Testimonials & Leads Management
+- ✅ Phase 5: Testimonials & Leads Management (Complete)
 - Phase 6: Contact Settings & System Configuration
 
 ## Sample Data
