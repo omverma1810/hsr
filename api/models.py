@@ -1,8 +1,11 @@
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
 from django.utils import timezone
-from django.core.validators import RegexValidator
+from django.core.validators import RegexValidator, FileExtensionValidator
 from django.core.exceptions import ValidationError
+from django.utils.text import slugify
+import os
+import uuid
 
 
 class AdminUserManager(BaseUserManager):
@@ -102,8 +105,37 @@ class SoftDeleteModel(models.Model):
         self.save()
 
 
+# Helper functions for file uploads
+def project_hero_image_path(instance, filename):
+    """Generate path for project hero images."""
+    ext = filename.split('.')[-1]
+    filename = f"{uuid.uuid4()}.{ext}"
+    return os.path.join('projects', str(instance.id), 'hero', filename)
+
+
+def project_gallery_image_path(instance, filename):
+    """Generate path for project gallery images."""
+    ext = filename.split('.')[-1]
+    filename = f"{uuid.uuid4()}.{ext}"
+    return os.path.join('projects', str(instance.project.id), 'gallery', filename)
+
+
+def project_floor_plan_path(instance, filename):
+    """Generate path for floor plan files."""
+    ext = filename.split('.')[-1]
+    filename = f"{uuid.uuid4()}.{ext}"
+    return os.path.join('projects', str(instance.project.id), 'floor_plans', filename)
+
+
+def project_brochure_path(instance, filename):
+    """Generate path for project brochure."""
+    ext = filename.split('.')[-1]
+    filename = f"{uuid.uuid4()}.{ext}"
+    return os.path.join('projects', str(instance.id), 'brochure', filename)
+
+
 class Project(TimeStampedModel, SoftDeleteModel):
-    """Model for real estate projects."""
+    """Enhanced Project model with complete fields for real estate projects."""
 
     STATUS_CHOICES = [
         ('upcoming', 'Upcoming'),
@@ -111,24 +143,147 @@ class Project(TimeStampedModel, SoftDeleteModel):
         ('completed', 'Completed'),
     ]
 
-    title = models.CharField(max_length=255)
-    location = models.CharField(max_length=255)
-    rera_number = models.CharField(max_length=100, unique=True)
-    description = models.TextField()
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='upcoming')
-    is_featured = models.BooleanField(default=False)
+    # Basic Information
+    title = models.CharField(max_length=255, db_index=True)
+    slug = models.SlugField(max_length=300, unique=True, blank=True)
+    location = models.CharField(max_length=255, db_index=True)
+    rera_number = models.CharField(
+        max_length=100,
+        unique=True,
+        db_index=True,
+        help_text='Unique RERA registration number'
+    )
+    description = models.TextField(help_text='Detailed project description')
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='upcoming',
+        db_index=True
+    )
 
-    # Media fields (we'll handle file uploads in Phase 4)
-    hero_image = models.URLField(blank=True, null=True)
+    # Media Fields
+    hero_image_url = models.URLField(
+        blank=True,
+        null=True,
+        help_text='External URL for hero image (if not uploading file)'
+    )
+    hero_image_file = models.ImageField(
+        upload_to=project_hero_image_path,
+        blank=True,
+        null=True,
+        validators=[FileExtensionValidator(['jpg', 'jpeg', 'png', 'webp'])],
+        help_text='Upload hero image file'
+    )
+
+    brochure_url = models.URLField(
+        blank=True,
+        null=True,
+        help_text='External URL for brochure PDF (if not uploading file)'
+    )
+    brochure_file = models.FileField(
+        upload_to=project_brochure_path,
+        blank=True,
+        null=True,
+        validators=[FileExtensionValidator(['pdf'])],
+        help_text='Upload brochure PDF file'
+    )
+
+    # Configurations (JSON field for flexibility)
+    configurations = models.JSONField(
+        default=dict,
+        help_text='Project configurations: {1BHK: true, 2BHK: false, ...}'
+    )
+
+    # Amenities (JSON field for flexibility)
+    amenities = models.JSONField(
+        default=dict,
+        help_text='Project amenities: {swimming_pool: true, gym: false, ...}'
+    )
+
+    # Settings
+    is_featured = models.BooleanField(
+        default=False,
+        db_index=True,
+        help_text='Featured projects appear on homepage'
+    )
+
+    # Tracking
+    created_by = models.ForeignKey(
+        'AdminUser',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_projects',
+        help_text='Admin user who created this project'
+    )
+    updated_by = models.ForeignKey(
+        'AdminUser',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='updated_projects',
+        help_text='Admin user who last updated this project'
+    )
+
+    # Metadata
+    view_count = models.IntegerField(default=0, help_text='Number of times project was viewed')
 
     class Meta:
         db_table = 'projects'
         verbose_name = 'Project'
         verbose_name_plural = 'Projects'
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['status', 'is_deleted']),
+            models.Index(fields=['is_featured', 'is_deleted']),
+            models.Index(fields=['created_at']),
+        ]
 
     def __str__(self):
         return f"{self.title} - {self.location}"
+
+    def save(self, *args, **kwargs):
+        """Auto-generate slug from title if not provided."""
+        if not self.slug:
+            self.slug = slugify(self.title)
+            # Ensure unique slug
+            original_slug = self.slug
+            counter = 1
+            while Project.objects.filter(slug=self.slug).exclude(pk=self.pk).exists():
+                self.slug = f"{original_slug}-{counter}"
+                counter += 1
+        super().save(*args, **kwargs)
+
+    @property
+    def hero_image(self):
+        """Return hero image URL (file upload takes precedence over URL)."""
+        if self.hero_image_file:
+            return self.hero_image_file.url
+        return self.hero_image_url
+
+    @property
+    def brochure(self):
+        """Return brochure URL (file upload takes precedence over URL)."""
+        if self.brochure_file:
+            return self.brochure_file.url
+        return self.brochure_url
+
+    def get_configurations_list(self):
+        """Return list of selected configurations."""
+        if not self.configurations:
+            return []
+        return [key for key, value in self.configurations.items() if value]
+
+    def get_amenities_list(self):
+        """Return list of selected amenities."""
+        if not self.amenities:
+            return []
+        return [key for key, value in self.amenities.items() if value]
+
+    def increment_view_count(self):
+        """Increment view count."""
+        self.view_count += 1
+        self.save(update_fields=['view_count'])
 
 
 class Lead(TimeStampedModel, SoftDeleteModel):
@@ -377,3 +532,112 @@ class FeaturedProject(TimeStampedModel):
 
     def __str__(self):
         return f"Featured: {self.project.title} (Order: {self.display_order})"
+
+
+class ProjectGalleryImage(TimeStampedModel, SoftDeleteModel):
+    """Model for project gallery images."""
+
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.CASCADE,
+        related_name='gallery_images'
+    )
+
+    image_url = models.URLField(
+        blank=True,
+        null=True,
+        help_text='External URL for gallery image'
+    )
+    image_file = models.ImageField(
+        upload_to=project_gallery_image_path,
+        blank=True,
+        null=True,
+        validators=[FileExtensionValidator(['jpg', 'jpeg', 'png', 'webp'])],
+        help_text='Upload gallery image file'
+    )
+
+    caption = models.CharField(max_length=255, blank=True)
+    display_order = models.IntegerField(default=0)
+
+    class Meta:
+        db_table = 'project_gallery_images'
+        verbose_name = 'Gallery Image'
+        verbose_name_plural = 'Gallery Images'
+        ordering = ['display_order', 'created_at']
+
+    def __str__(self):
+        return f"{self.project.title} - Gallery Image {self.id}"
+
+    @property
+    def image(self):
+        """Return image URL (file upload takes precedence)."""
+        if self.image_file:
+            return self.image_file.url
+        return self.image_url
+
+
+class ProjectFloorPlan(TimeStampedModel, SoftDeleteModel):
+    """Model for project floor plans."""
+
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.CASCADE,
+        related_name='floor_plans'
+    )
+
+    title = models.CharField(max_length=255, help_text='e.g., 2BHK Floor Plan')
+
+    file_url = models.URLField(
+        blank=True,
+        null=True,
+        help_text='External URL for floor plan file'
+    )
+    file = models.FileField(
+        upload_to=project_floor_plan_path,
+        blank=True,
+        null=True,
+        validators=[FileExtensionValidator(['pdf', 'jpg', 'jpeg', 'png'])],
+        help_text='Upload floor plan file (PDF or Image)'
+    )
+
+    display_order = models.IntegerField(default=0)
+
+    class Meta:
+        db_table = 'project_floor_plans'
+        verbose_name = 'Floor Plan'
+        verbose_name_plural = 'Floor Plans'
+        ordering = ['display_order', 'created_at']
+
+    def __str__(self):
+        return f"{self.project.title} - {self.title}"
+
+    @property
+    def file_path(self):
+        """Return file URL (file upload takes precedence)."""
+        if self.file:
+            return self.file.url
+        return self.file_url
+
+
+# Configuration and Amenity Choices (for validation and frontend)
+PROJECT_CONFIGURATIONS = [
+    ('1bhk', '1BHK'),
+    ('2bhk', '2BHK'),
+    ('3bhk', '3BHK'),
+    ('4bhk', '4BHK'),
+    ('villa', 'Villa'),
+    ('duplex', 'Duplex'),
+]
+
+PROJECT_AMENITIES = [
+    ('swimming_pool', 'Swimming Pool'),
+    ('childrens_play_area', "Children's Play Area"),
+    ('security', 'Security'),
+    ('parking', 'Parking'),
+    ('jogging_track', 'Jogging Track'),
+    ('gym', 'Gym'),
+    ('clubhouse', 'Clubhouse'),
+    ('power_backup', 'Power Backup'),
+    ('garden', 'Garden'),
+    ('community_hall', 'Community Hall'),
+]

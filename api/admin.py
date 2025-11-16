@@ -1,6 +1,10 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import AdminUser, Project, Lead, Testimonial, SystemStatus, HomePageContent, FeaturedProject
+from .models import (
+    AdminUser, Project, Lead, Testimonial, SystemStatus,
+    HomePageContent, FeaturedProject,
+    ProjectGalleryImage, ProjectFloorPlan
+)
 
 
 @admin.register(AdminUser)
@@ -29,14 +33,69 @@ class AdminUserAdmin(BaseUserAdmin):
     readonly_fields = ['date_joined', 'last_login']
 
 
+class ProjectGalleryImageInline(admin.TabularInline):
+    """Inline admin for project gallery images."""
+    model = ProjectGalleryImage
+    extra = 1
+    fields = ['image_url', 'image_file', 'caption', 'display_order', 'is_deleted']
+    readonly_fields = []
+
+
+class ProjectFloorPlanInline(admin.TabularInline):
+    """Inline admin for project floor plans."""
+    model = ProjectFloorPlan
+    extra = 1
+    fields = ['title', 'file_url', 'file', 'display_order', 'is_deleted']
+    readonly_fields = []
+
+
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
-    """Admin for Project model."""
-    list_display = ['title', 'location', 'rera_number', 'status', 'is_featured', 'created_at']
-    list_filter = ['status', 'is_featured', 'created_at']
-    search_fields = ['title', 'location', 'rera_number']
+    """Enhanced admin for Project model."""
+
+    list_display = [
+        'title', 'location', 'rera_number', 'status',
+        'is_featured', 'view_count', 'created_by', 'created_at'
+    ]
+    list_filter = ['status', 'is_featured', 'is_deleted', 'created_at']
+    search_fields = ['title', 'location', 'rera_number', 'description']
     ordering = ['-created_at']
-    readonly_fields = ['created_at', 'updated_at']
+    readonly_fields = ['slug', 'view_count', 'created_at', 'updated_at', 'created_by', 'updated_by']
+
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('title', 'slug', 'location', 'rera_number', 'description', 'status')
+        }),
+        ('Media', {
+            'fields': (
+                ('hero_image_url', 'hero_image_file'),
+                ('brochure_url', 'brochure_file'),
+            )
+        }),
+        ('Configurations & Amenities', {
+            'fields': ('configurations', 'amenities')
+        }),
+        ('Settings', {
+            'fields': ('is_featured', 'view_count')
+        }),
+        ('Tracking', {
+            'fields': ('created_by', 'updated_by', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+        ('Soft Delete', {
+            'fields': ('is_deleted', 'deleted_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+    inlines = [ProjectGalleryImageInline, ProjectFloorPlanInline]
+
+    def save_model(self, request, obj, form, change):
+        """Auto-set created_by and updated_by."""
+        if not change:
+            obj.created_by = request.user
+        obj.updated_by = request.user
+        super().save_model(request, obj, form, change)
 
 
 @admin.register(Lead)
@@ -107,6 +166,28 @@ class HomePageContentAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         # Prevent deleting home page content
         return False
+
+
+@admin.register(ProjectGalleryImage)
+class ProjectGalleryImageAdmin(admin.ModelAdmin):
+    """Admin for ProjectGalleryImage model."""
+
+    list_display = ['id', 'project', 'caption', 'display_order', 'created_at']
+    list_filter = ['is_deleted', 'created_at']
+    search_fields = ['project__title', 'caption']
+    ordering = ['project', 'display_order', 'created_at']
+    readonly_fields = ['created_at', 'updated_at']
+
+
+@admin.register(ProjectFloorPlan)
+class ProjectFloorPlanAdmin(admin.ModelAdmin):
+    """Admin for ProjectFloorPlan model."""
+
+    list_display = ['id', 'project', 'title', 'display_order', 'created_at']
+    list_filter = ['is_deleted', 'created_at']
+    search_fields = ['project__title', 'title']
+    ordering = ['project', 'display_order', 'created_at']
+    readonly_fields = ['created_at', 'updated_at']
 
 
 @admin.register(FeaturedProject)

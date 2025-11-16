@@ -25,6 +25,22 @@ from .homepage_views import (
     CompleteHomePageView
 )
 
+# Import project views (Phase 4)
+from .project_views import (
+    ProjectsListView,
+    ProjectDetailView,
+    ProjectGalleryView,
+    ProjectGalleryImageDetailView,
+    ProjectFloorPlansView,
+    ProjectFloorPlanDetailView,
+    ProjectRestoreView,
+    ProjectCloneView,
+    BulkActionsView,
+    ExportProjectsView,
+    ConfigurationsListView,
+    AmenitiesListView
+)
+
 urlpatterns = [
     # Authentication endpoints (Phase 1)
     path('auth/login/', LoginView.as_view(), name='login'),
@@ -49,4 +65,29 @@ urlpatterns = [
     path('homepage/featured-projects/', FeaturedProjectsListView.as_view(), name='featured_projects_list'),
     path('homepage/featured-projects/<int:pk>/', FeaturedProjectDetailView.as_view(), name='featured_project_detail'),
     path('homepage/testimonials/', TestimonialsDisplayView.as_view(), name='testimonials_display'),
+
+    # Project endpoints (Phase 4)
+    # Main project CRUD
+    path('projects/', ProjectsListView.as_view(), name='projects_list'),
+    path('projects/<int:pk>/', ProjectDetailView.as_view(), name='project_detail'),
+
+    # Project gallery management
+    path('projects/<int:pk>/gallery/', ProjectGalleryView.as_view(), name='project_gallery'),
+    path('projects/<int:pk>/gallery/<int:image_id>/', ProjectGalleryImageDetailView.as_view(), name='project_gallery_image_detail'),
+
+    # Project floor plans management
+    path('projects/<int:pk>/floor-plans/', ProjectFloorPlansView.as_view(), name='project_floor_plans'),
+    path('projects/<int:pk>/floor-plans/<int:plan_id>/', ProjectFloorPlanDetailView.as_view(), name='project_floor_plan_detail'),
+
+    # Project actions
+    path('projects/<int:pk>/restore/', ProjectRestoreView.as_view(), name='project_restore'),
+    path('projects/<int:pk>/clone/', ProjectCloneView.as_view(), name='project_clone'),
+
+    # Bulk actions
+    path('projects/bulk-actions/', BulkActionsView.as_view(), name='project_bulk_actions'),
+    path('projects/export/', ExportProjectsView.as_view(), name='projects_export'),
+
+    # Reference data
+    path('projects/configurations/', ConfigurationsListView.as_view(), name='configurations_list'),
+    path('projects/amenities/', AmenitiesListView.as_view(), name='amenities_list'),
 ]
