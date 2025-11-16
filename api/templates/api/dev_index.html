@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>HSR Dev Index</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'api/dev.css' %}" />
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial;
+        padding: 24px;
+      }
+      h1 {
+        color: #111827;
+      }
+      .card {
+        border: 1px solid #e5e7eb;
+        background: #fff;
+        padding: 16px;
+        border-radius: 8px;
+        max-width: 720px;
+      }
+      ul {
+        margin-top: 8px;
+      }
+      li {
+        margin: 6px 0;
+      }
+      a {
+        color: #2563eb;
+        text-decoration: none;
+        .card {
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>Development server</h1>
+      <p>{{ message }}</p>
+
+      <h3>Useful endpoints</h3>
+      <ul>
+        <li><a href="{{ endpoints.admin }}">Admin</a></li>
+        <li><a href="{{ endpoints.api_root }}">API Root</a></li>
+        <li><a href="{{ endpoints.swagger_ui }}">Swagger UI</a></li>
+        <li><a href="{{ endpoints.redoc }}">ReDoc</a></li>
+        <li><a href="{{ endpoints.schema }}">OpenAPI Schema (JSON)</a></li>
+        <li><a href="{{ endpoints.api_root }}ping/">Ping</a></li>
+      </ul>
+
+      <p style="font-size: 0.9rem; color: #6b7280">
+        Tip: Use the Swagger UI above to explore requests and try the API.
+      </p>
+    </div>
+  </body>
+</html>

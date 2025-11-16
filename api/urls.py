@@ -2,7 +2,7 @@ from django.urls import path
 from rest_framework_simplejwt.views import TokenRefreshView
 
 # Import existing views
-from .views import LoginView, LogoutView, CurrentUserView, ChangePasswordView
+from .views import LoginView, LogoutView, CurrentUserView, ChangePasswordView, PingView
 
 # Import dashboard views (Phase 2)
 from .dashboard_views import (
@@ -48,6 +48,9 @@ urlpatterns = [
     path('auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('auth/me/', CurrentUserView.as_view(), name='current_user'),
     path('auth/change-password/', ChangePasswordView.as_view(), name='change_password'),
+
+    # Health-check endpoint
+    path('ping/', PingView.as_view(), name='ping'),
 
     # Dashboard endpoints (Phase 2)
     path('dashboard/', DashboardOverviewView.as_view(), name='dashboard_overview'),
