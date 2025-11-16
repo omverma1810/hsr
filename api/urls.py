@@ -41,6 +41,26 @@ from .project_views import (
     AmenitiesListView
 )
 
+# Import testimonial views (Phase 5)
+from .testimonial_views import (
+    TestimonialsListView,
+    TestimonialDetailView,
+    TestimonialRestoreView,
+    BulkTestimonialActionsView
+)
+
+# Import lead views (Phase 5)
+from .lead_views import (
+    LeadsListView,
+    LeadDetailView,
+    LeadStatusUpdateView,
+    LeadAddNoteView,
+    LeadRestoreView,
+    LeadStatisticsView,
+    BulkLeadActionsView,
+    ExportLeadsView
+)
+
 urlpatterns = [
     # Authentication endpoints (Phase 1)
     path('auth/login/', LoginView.as_view(), name='login'),
@@ -93,4 +113,20 @@ urlpatterns = [
     # Reference data
     path('projects/configurations/', ConfigurationsListView.as_view(), name='configurations_list'),
     path('projects/amenities/', AmenitiesListView.as_view(), name='amenities_list'),
+
+    # Testimonial endpoints (Phase 5)
+    path('testimonials/', TestimonialsListView.as_view(), name='testimonials_list'),
+    path('testimonials/<int:pk>/', TestimonialDetailView.as_view(), name='testimonial_detail'),
+    path('testimonials/<int:pk>/restore/', TestimonialRestoreView.as_view(), name='testimonial_restore'),
+    path('testimonials/bulk-actions/', BulkTestimonialActionsView.as_view(), name='testimonial_bulk_actions'),
+
+    # Lead endpoints (Phase 5)
+    path('leads/', LeadsListView.as_view(), name='leads_list'),
+    path('leads/<int:pk>/', LeadDetailView.as_view(), name='lead_detail'),
+    path('leads/<int:pk>/status/', LeadStatusUpdateView.as_view(), name='lead_status_update'),
+    path('leads/<int:pk>/notes/', LeadAddNoteView.as_view(), name='lead_add_note'),
+    path('leads/<int:pk>/restore/', LeadRestoreView.as_view(), name='lead_restore'),
+    path('leads/statistics/', LeadStatisticsView.as_view(), name='lead_statistics'),
+    path('leads/bulk-actions/', BulkLeadActionsView.as_view(), name='lead_bulk_actions'),
+    path('leads/export/', ExportLeadsView.as_view(), name='leads_export'),
 ]

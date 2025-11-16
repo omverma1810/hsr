@@ -287,7 +287,7 @@ class Project(TimeStampedModel, SoftDeleteModel):
 
 
 class Lead(TimeStampedModel, SoftDeleteModel):
-    """Model for customer leads/inquiries."""
+    """Enhanced model for customer leads/inquiries with follow-up management."""
 
     STATUS_CHOICES = [
         ('new', 'New'),
@@ -303,24 +303,87 @@ class Lead(TimeStampedModel, SoftDeleteModel):
         ('walk_in', 'Walk In'),
     ]
 
+    PRIORITY_CHOICES = [
+        ('low', 'Low'),
+        ('medium', 'Medium'),
+        ('high', 'High'),
+        ('urgent', 'Urgent'),
+    ]
+
+    CONTACT_METHOD_CHOICES = [
+        ('email', 'Email'),
+        ('phone', 'Phone'),
+        ('whatsapp', 'WhatsApp'),
+    ]
+
     # Contact Information
-    name = models.CharField(max_length=255)
-    email = models.EmailField()
+    name = models.CharField(max_length=255, db_index=True)
+    email = models.EmailField(db_index=True)
     phone = models.CharField(
         max_length=15,
+        db_index=True,
         validators=[RegexValidator(regex=r'^\+?1?\d{9,15}$', message="Invalid phone number format")]
     )
 
     # Inquiry Details
-    project = models.ForeignKey(Project, on_delete=models.SET_NULL, null=True, blank=True, related_name='leads')
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='leads'
+    )
     message = models.TextField()
-    source = models.CharField(max_length=20, choices=SOURCE_CHOICES, default='contact_form')
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='new')
+    source = models.CharField(
+        max_length=20,
+        choices=SOURCE_CHOICES,
+        default='contact_form',
+        db_index=True
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='new',
+        db_index=True
+    )
+
+    # Phase 5: Enhanced Lead Management Fields
+    priority = models.CharField(
+        max_length=10,
+        choices=PRIORITY_CHOICES,
+        default='medium',
+        db_index=True,
+        help_text='Lead priority level'
+    )
+    preferred_contact_method = models.CharField(
+        max_length=10,
+        choices=CONTACT_METHOD_CHOICES,
+        default='phone',
+        help_text='Customer preferred contact method'
+    )
 
     # Tracking
     contacted_at = models.DateTimeField(null=True, blank=True)
-    contacted_by = models.ForeignKey(AdminUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='contacted_leads')
-    notes = models.TextField(blank=True)
+    contacted_by = models.ForeignKey(
+        AdminUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='contacted_leads'
+    )
+    notes = models.TextField(blank=True, help_text='Internal notes about this lead')
+
+    # Follow-up Management
+    next_follow_up = models.DateTimeField(
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text='Scheduled date/time for next follow-up'
+    )
+    follow_up_count = models.IntegerField(
+        default=0,
+        help_text='Number of times this lead has been followed up'
+    )
 
     class Meta:
         db_table = 'leads'
@@ -329,32 +392,107 @@ class Lead(TimeStampedModel, SoftDeleteModel):
         ordering = ['-created_at']
         indexes = [
             models.Index(fields=['status', 'created_at']),
+            models.Index(fields=['status', 'priority']),
             models.Index(fields=['email']),
             models.Index(fields=['phone']),
+            models.Index(fields=['next_follow_up']),
+            models.Index(fields=['priority', 'status']),
         ]
 
     def __str__(self):
         return f"{self.name} - {self.project.title if self.project else 'No Project'}"
 
+    def mark_contacted(self, admin_user=None):
+        """Mark lead as contacted and update tracking fields."""
+        self.status = 'contacted'
+        self.contacted_at = timezone.now()
+        if admin_user:
+            self.contacted_by = admin_user
+        self.follow_up_count += 1
+        self.save()
+
+    def get_status_display_color(self):
+        """Return color code for status display in frontend."""
+        colors = {
+            'new': '#3B82F6',      # Blue
+            'contacted': '#F59E0B',  # Amber
+            'qualified': '#10B981',  # Green
+            'closed': '#6B7280',    # Gray
+        }
+        return colors.get(self.status, '#6B7280')
+
+    def get_priority_display_color(self):
+        """Return color code for priority display in frontend."""
+        colors = {
+            'low': '#10B981',      # Green
+            'medium': '#F59E0B',   # Amber
+            'high': '#F97316',     # Orange
+            'urgent': '#EF4444',   # Red
+        }
+        return colors.get(self.priority, '#6B7280')
+
 
 class Testimonial(TimeStampedModel, SoftDeleteModel):
-    """Model for customer testimonials."""
+    """Enhanced model for customer testimonials with ratings and verification."""
 
-    customer_name = models.CharField(max_length=255)
-    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='testimonials')
+    RATING_CHOICES = [
+        (1, '1 Star'),
+        (2, '2 Stars'),
+        (3, '3 Stars'),
+        (4, '4 Stars'),
+        (5, '5 Stars'),
+    ]
+
+    customer_name = models.CharField(max_length=255, db_index=True)
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.CASCADE,
+        related_name='testimonials'
+    )
     quote = models.TextField()
     customer_photo = models.URLField(blank=True, null=True)
-    is_active = models.BooleanField(default=True)
-    display_order = models.IntegerField(default=0)
+
+    # Phase 5: Enhanced Testimonial Fields
+    rating = models.IntegerField(
+        choices=RATING_CHOICES,
+        default=5,
+        db_index=True,
+        help_text='Customer rating (1-5 stars)'
+    )
+    verified = models.BooleanField(
+        default=False,
+        db_index=True,
+        help_text='Whether this testimonial has been verified by admin'
+    )
+
+    # Display Settings
+    is_active = models.BooleanField(
+        default=True,
+        db_index=True,
+        help_text='Whether to show this testimonial on website'
+    )
+    display_order = models.IntegerField(
+        default=0,
+        help_text='Order in which to display (lower number = higher priority)'
+    )
 
     class Meta:
         db_table = 'testimonials'
         verbose_name = 'Testimonial'
         verbose_name_plural = 'Testimonials'
         ordering = ['display_order', '-created_at']
+        indexes = [
+            models.Index(fields=['is_active', 'rating']),
+            models.Index(fields=['verified', 'is_active']),
+            models.Index(fields=['project', 'is_active']),
+        ]
 
     def __str__(self):
-        return f"{self.customer_name} - {self.project.title}"
+        return f"{self.customer_name} - {self.project.title} ({self.rating}★)"
+
+    def get_rating_stars(self):
+        """Return visual representation of rating."""
+        return '★' * self.rating + '☆' * (5 - self.rating)
 
 
 class SystemStatus(TimeStampedModel):
