@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 
-from .models import HomePageContent, FeaturedProject, Testimonial
+from .models import HomePageContent, FeaturedProject, Testimonial, PageHeroImages
 from .homepage_serializers import (
     HomePageContentSerializer,
     HomePageContentUpdateSerializer,
@@ -12,7 +12,8 @@ from .homepage_serializers import (
     FeaturedProjectSerializer,
     AddFeaturedProjectSerializer,
     TestimonialDisplaySerializer,
-    CompleteHomePageSerializer
+    CompleteHomePageSerializer,
+    PageHeroImagesSerializer
 )
 from .utils import success_response, error_response
 from .permissions import IsAdminUser
@@ -481,4 +482,62 @@ class CompleteHomePageView(APIView):
             return error_response(
                 errors={'detail': str(e)},
                 message="Failed to retrieve homepage data"
+            )
+
+
+class PageHeroImagesView(APIView):
+    """
+    Get or update hero images for Projects, About, and Contact pages.
+    GET: Public access
+    PUT: Admin only
+    """
+
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [AllowAny()]
+        return [IsAuthenticated(), IsAdminUser()]
+
+    @extend_schema(
+        responses={200: PageHeroImagesSerializer},
+        description="Get page hero images (public access)"
+    )
+    def get(self, request):
+        try:
+            images = PageHeroImages.get_current()
+            serializer = PageHeroImagesSerializer(images, context={'request': request})
+            return success_response(
+                data=serializer.data,
+                message="Page hero images retrieved successfully"
+            )
+        except Exception as e:
+            return error_response(
+                errors={'detail': str(e)},
+                message="Failed to retrieve page hero images"
+            )
+
+    @extend_schema(
+        request=PageHeroImagesSerializer,
+        responses={200: PageHeroImagesSerializer},
+        description="Update page hero images (admin only)"
+    )
+    def put(self, request):
+        try:
+            images = PageHeroImages.get_current()
+            serializer = PageHeroImagesSerializer(images, data=request.data, partial=True, context={'request': request})
+
+            if serializer.is_valid():
+                serializer.save()
+                return success_response(
+                    data=serializer.data,
+                    message="Page hero images updated successfully"
+                )
+
+            return error_response(
+                errors=serializer.errors,
+                message="Failed to update page hero images"
+            )
+        except Exception as e:
+            return error_response(
+                errors={'detail': str(e)},
+                message="Failed to update page hero images"
             )

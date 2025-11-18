@@ -1,351 +1,215 @@
-"""
-Views for Testimonial Management (Phase 5).
-Handles testimonial CRUD operations with ratings and verification.
-"""
-
-from rest_framework import status
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from drf_spectacular.utils import extend_schema, OpenApiResponse
 from django.db.models import Q
-from django.utils import timezone
-
-from .models import Testimonial, Project
-from .testimonial_serializers import (
-    TestimonialListSerializer,
-    TestimonialDetailSerializer,
-    TestimonialCreateUpdateSerializer,
-    BulkTestimonialActionSerializer,
-)
-from .utils import success_response, error_response
+from .models import Testimonial
+from .testimonial_serializers import TestimonialSerializer, TestimonialListSerializer
 from .permissions import IsAdminUser
+from .utils import success_response, error_response
+from rest_framework import status
 
 
 class TestimonialsListView(APIView):
-    """
-    GET: List all testimonials with filtering, search, sorting, pagination
-    POST: Create new testimonial (admin only)
-    """
+    """List and create testimonials."""
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
-    def get_permissions(self):
-        """Allow authenticated users for GET, admin only for POST."""
-        if self.request.method == 'GET':
-            return [IsAuthenticated()]
-        return [IsAdminUser()]
-
+    @extend_schema(
+        responses={200: TestimonialListSerializer(many=True)},
+        description="List all testimonials (admin only, with filtering and pagination)"
+    )
     def get(self, request):
-        """Get all testimonials with filtering and pagination."""
         try:
             # Query parameters
-            project_id = request.query_params.get('project')
             is_active = request.query_params.get('is_active')
-            verified = request.query_params.get('verified')
-            min_rating = request.query_params.get('min_rating')
-            search = request.query_params.get('search')
-            sort_by = request.query_params.get('sort_by', '-created_at')
-            page = int(request.query_params.get('page', 1))
-            page_size = int(request.query_params.get('page_size', 25))
-
-            # Start with all non-deleted testimonials
+            project_id = request.query_params.get('project_id')
+            search = request.query_params.get('search', '')
+            include_deleted = request.query_params.get('include_deleted', 'false').lower() == 'true'
+            
+            # Build query
             queryset = Testimonial.objects.select_related('project').all()
-
-            # Apply filters
-            if project_id:
-                queryset = queryset.filter(project_id=project_id)
-
+            
+            if not include_deleted:
+                queryset = queryset.filter(is_deleted=False)
+            
             if is_active is not None:
                 queryset = queryset.filter(is_active=is_active.lower() == 'true')
-
-            if verified is not None:
-                queryset = queryset.filter(verified=verified.lower() == 'true')
-
-            if min_rating:
-                queryset = queryset.filter(rating__gte=int(min_rating))
-
-            # Search
+            
+            if project_id:
+                queryset = queryset.filter(project_id=project_id)
+            
             if search:
                 queryset = queryset.filter(
                     Q(customer_name__icontains=search) |
                     Q(quote__icontains=search) |
                     Q(project__title__icontains=search)
                 )
-
-            # Sorting
-            allowed_sort_fields = [
-                'created_at', '-created_at',
-                'rating', '-rating',
-                'display_order', '-display_order',
-                'customer_name', '-customer_name',
-            ]
-            if sort_by in allowed_sort_fields:
-                queryset = queryset.order_by(sort_by)
-
-            # Count before pagination
-            total = queryset.count()
-
-            # Pagination
-            start = (page - 1) * page_size
-            end = start + page_size
-            testimonials = queryset[start:end]
-
-            # Serialize
-            serializer = TestimonialListSerializer(testimonials, many=True)
-
+            
+            # Order by display_order, then created_at
+            queryset = queryset.order_by('display_order', '-created_at')
+            
+            serializer = TestimonialListSerializer(queryset, many=True)
             return success_response(
-                data={
-                    'testimonials': serializer.data,
-                    'pagination': {
-                        'total': total,
-                        'page': page,
-                        'page_size': page_size,
-                        'total_pages': (total + page_size - 1) // page_size,
-                    }
-                },
-                message='Testimonials retrieved successfully'
+                data=serializer.data,
+                message="Testimonials retrieved successfully"
             )
-
         except Exception as e:
             return error_response(
-                message='Failed to retrieve testimonials',
-                errors={'error': str(e)},
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+                errors={'detail': str(e)},
+                message="Failed to retrieve testimonials"
             )
 
+    @extend_schema(
+        request=TestimonialSerializer,
+        responses={201: TestimonialSerializer},
+        description="Create a new testimonial (admin only)"
+    )
     def post(self, request):
-        """Create new testimonial (admin only)."""
         try:
-            serializer = TestimonialCreateUpdateSerializer(data=request.data)
-
+            serializer = TestimonialSerializer(data=request.data)
             if serializer.is_valid():
                 testimonial = serializer.save()
-
-                # Return detailed response
-                detail_serializer = TestimonialDetailSerializer(testimonial)
+                response_serializer = TestimonialSerializer(testimonial)
                 return success_response(
-                    data=detail_serializer.data,
-                    message='Testimonial created successfully',
+                    data=response_serializer.data,
+                    message="Testimonial created successfully",
                     status_code=status.HTTP_201_CREATED
                 )
-
             return error_response(
-                message='Validation failed',
                 errors=serializer.errors,
-                status_code=status.HTTP_400_BAD_REQUEST
+                message="Failed to create testimonial"
             )
-
         except Exception as e:
             return error_response(
-                message='Failed to create testimonial',
-                errors={'error': str(e)},
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+                errors={'detail': str(e)},
+                message="Failed to create testimonial"
             )
 
 
 class TestimonialDetailView(APIView):
-    """
-    GET: Get single testimonial details
-    PUT: Update testimonial (admin only)
-    DELETE: Delete testimonial (admin only, soft delete)
-    """
+    """Retrieve, update, or delete a testimonial."""
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
-    def get_permissions(self):
-        """Allow authenticated users for GET, admin only for PUT/DELETE."""
-        if self.request.method == 'GET':
-            return [IsAuthenticated()]
-        return [IsAdminUser()]
+    def get_object(self, pk):
+        try:
+            return Testimonial.objects.select_related('project').get(pk=pk, is_deleted=False)
+        except Testimonial.DoesNotExist:
+            return None
 
+    @extend_schema(
+        responses={200: TestimonialSerializer},
+        description="Get testimonial details (admin only)"
+    )
     def get(self, request, pk):
-        """Get testimonial details."""
-        try:
-            testimonial = Testimonial.objects.select_related('project').get(pk=pk)
-            serializer = TestimonialDetailSerializer(testimonial)
-
-            return success_response(
-                data=serializer.data,
-                message='Testimonial retrieved successfully'
-            )
-
-        except Testimonial.DoesNotExist:
+        testimonial = self.get_object(pk)
+        if not testimonial:
             return error_response(
-                message='Testimonial not found',
+                errors={'detail': 'Testimonial not found'},
+                message="Testimonial not found",
                 status_code=status.HTTP_404_NOT_FOUND
             )
-        except Exception as e:
-            return error_response(
-                message='Failed to retrieve testimonial',
-                errors={'error': str(e)},
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+        
+        serializer = TestimonialSerializer(testimonial)
+        return success_response(
+            data=serializer.data,
+            message="Testimonial retrieved successfully"
+        )
 
+    @extend_schema(
+        request=TestimonialSerializer,
+        responses={200: TestimonialSerializer},
+        description="Update testimonial (admin only)"
+    )
     def put(self, request, pk):
-        """Update testimonial (admin only)."""
-        try:
-            testimonial = Testimonial.objects.get(pk=pk)
-            serializer = TestimonialCreateUpdateSerializer(
-                testimonial,
-                data=request.data,
-                partial=True
-            )
-
-            if serializer.is_valid():
-                serializer.save()
-
-                # Return detailed response
-                detail_serializer = TestimonialDetailSerializer(testimonial)
-                return success_response(
-                    data=detail_serializer.data,
-                    message='Testimonial updated successfully'
-                )
-
+        testimonial = self.get_object(pk)
+        if not testimonial:
             return error_response(
-                message='Validation failed',
-                errors=serializer.errors,
-                status_code=status.HTTP_400_BAD_REQUEST
-            )
-
-        except Testimonial.DoesNotExist:
-            return error_response(
-                message='Testimonial not found',
+                errors={'detail': 'Testimonial not found'},
+                message="Testimonial not found",
                 status_code=status.HTTP_404_NOT_FOUND
             )
-        except Exception as e:
-            return error_response(
-                message='Failed to update testimonial',
-                errors={'error': str(e)},
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-
-    def delete(self, request, pk):
-        """Soft delete testimonial (admin only)."""
-        try:
-            testimonial = Testimonial.objects.get(pk=pk)
-            testimonial.soft_delete()
-
+        
+        serializer = TestimonialSerializer(testimonial, data=request.data, partial=True)
+        if serializer.is_valid():
+            testimonial = serializer.save()
+            response_serializer = TestimonialSerializer(testimonial)
             return success_response(
-                data={'id': pk},
-                message='Testimonial deleted successfully'
+                data=response_serializer.data,
+                message="Testimonial updated successfully"
             )
+        return error_response(
+            errors=serializer.errors,
+            message="Failed to update testimonial"
+        )
 
-        except Testimonial.DoesNotExist:
+    patch = put  # Support both PUT and PATCH
+
+    @extend_schema(
+        responses={200: OpenApiResponse(description="Testimonial deleted successfully")},
+        description="Delete testimonial (admin only, soft delete)"
+    )
+    def delete(self, request, pk):
+        testimonial = self.get_object(pk)
+        if not testimonial:
             return error_response(
-                message='Testimonial not found',
+                errors={'detail': 'Testimonial not found'},
+                message="Testimonial not found",
                 status_code=status.HTTP_404_NOT_FOUND
+            )
+        
+        try:
+            testimonial.soft_delete()
+            return success_response(
+                message="Testimonial deleted successfully"
             )
         except Exception as e:
             return error_response(
-                message='Failed to delete testimonial',
-                errors={'error': str(e)},
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+                errors={'detail': str(e)},
+                message="Failed to delete testimonial"
             )
 
 
 class TestimonialRestoreView(APIView):
-    """POST: Restore soft-deleted testimonial (admin only)."""
+    """Restore a soft-deleted testimonial."""
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
-    permission_classes = [IsAdminUser]
-
+    @extend_schema(
+        responses={
+            200: OpenApiResponse(description='Testimonial restored successfully - Returns the restored testimonial details.'),
+            404: OpenApiResponse(description='Not found - Deleted testimonial does not exist.'),
+        },
+        description='''
+        **Restore Testimonial**
+        
+        Restore a soft-deleted testimonial. This will set `is_deleted=False` and make the testimonial visible again.
+        
+        **Use Cases:**
+        - Recover accidentally deleted testimonials
+        - Restore testimonials from trash
+        
+        **Note:** Only soft-deleted testimonials can be restored. If a testimonial was never deleted, you'll get a 404 error.
+        
+        **Authentication Required:** Yes (Admin only)
+        ''',
+        tags=['Testimonials']
+    )
     def post(self, request, pk):
-        """Restore soft-deleted testimonial."""
         try:
-            testimonial = Testimonial.all_objects.get(pk=pk)
-
-            if not testimonial.is_deleted:
-                return error_response(
-                    message='Testimonial is not deleted',
-                    status_code=status.HTTP_400_BAD_REQUEST
-                )
-
+            testimonial = Testimonial.objects.get(pk=pk, is_deleted=True)
             testimonial.restore()
-
-            # Return detailed response
-            detail_serializer = TestimonialDetailSerializer(testimonial)
+            serializer = TestimonialSerializer(testimonial)
             return success_response(
-                data=detail_serializer.data,
-                message='Testimonial restored successfully'
+                data=serializer.data,
+                message="Testimonial restored successfully"
             )
-
         except Testimonial.DoesNotExist:
             return error_response(
-                message='Testimonial not found',
+                errors={'detail': 'Deleted testimonial not found'},
+                message="Testimonial not found",
                 status_code=status.HTTP_404_NOT_FOUND
             )
         except Exception as e:
             return error_response(
-                message='Failed to restore testimonial',
-                errors={'error': str(e)},
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+                errors={'detail': str(e)},
+                message="Failed to restore testimonial"
             )
 
-
-class BulkTestimonialActionsView(APIView):
-    """POST: Perform bulk actions on testimonials (admin only)."""
-
-    permission_classes = [IsAdminUser]
-
-    def post(self, request):
-        """Perform bulk actions on multiple testimonials."""
-        try:
-            serializer = BulkTestimonialActionSerializer(data=request.data)
-
-            if not serializer.is_valid():
-                return error_response(
-                    message='Validation failed',
-                    errors=serializer.errors,
-                    status_code=status.HTTP_400_BAD_REQUEST
-                )
-
-            testimonial_ids = serializer.validated_data['testimonial_ids']
-            action = serializer.validated_data['action']
-
-            # Get testimonials
-            if action in ['delete', 'activate', 'deactivate', 'verify', 'unverify']:
-                testimonials = Testimonial.objects.filter(id__in=testimonial_ids)
-            else:  # restore
-                testimonials = Testimonial.all_objects.filter(id__in=testimonial_ids)
-
-            if not testimonials.exists():
-                return error_response(
-                    message='No testimonials found with provided IDs',
-                    status_code=status.HTTP_404_NOT_FOUND
-                )
-
-            # Perform action
-            updated_count = 0
-
-            if action == 'delete':
-                for testimonial in testimonials:
-                    testimonial.soft_delete()
-                    updated_count += 1
-
-            elif action == 'restore':
-                for testimonial in testimonials:
-                    if testimonial.is_deleted:
-                        testimonial.restore()
-                        updated_count += 1
-
-            elif action == 'activate':
-                updated_count = testimonials.update(is_active=True)
-
-            elif action == 'deactivate':
-                updated_count = testimonials.update(is_active=False)
-
-            elif action == 'verify':
-                updated_count = testimonials.update(verified=True)
-
-            elif action == 'unverify':
-                updated_count = testimonials.update(verified=False)
-
-            return success_response(
-                data={
-                    'action': action,
-                    'updated_count': updated_count,
-                    'testimonial_ids': testimonial_ids,
-                },
-                message=f'Bulk action "{action}" completed successfully on {updated_count} testimonials'
-            )
-
-        except Exception as e:
-            return error_response(
-                message='Failed to perform bulk action',
-                errors={'error': str(e)},
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )

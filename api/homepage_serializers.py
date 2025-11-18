@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import HomePageContent, FeaturedProject, Project, Testimonial
+from .models import HomePageContent, FeaturedProject, Project, Testimonial, PageHeroImages
 
 
 class HeroSectionSerializer(serializers.ModelSerializer):
@@ -16,44 +16,26 @@ class HeroSectionSerializer(serializers.ModelSerializer):
 
 
 class StatisticsSectionSerializer(serializers.ModelSerializer):
-    """Serializer for statistics section with structured output."""
-
-    experience = serializers.SerializerMethodField()
-    projects = serializers.SerializerMethodField()
-    families = serializers.SerializerMethodField()
-    sqft = serializers.SerializerMethodField()
+    """Serializer for statistics section - returns flat fields as frontend expects."""
 
     class Meta:
         model = HomePageContent
-        fields = ['experience', 'projects', 'families', 'sqft']
-
-    def get_experience(self, obj):
-        return {
-            'value': obj.stats_experience_value,
-            'label': obj.stats_experience_label
-        }
-
-    def get_projects(self, obj):
-        return {
-            'value': obj.stats_projects_value,
-            'label': obj.stats_projects_label
-        }
-
-    def get_families(self, obj):
-        return {
-            'value': obj.stats_families_value,
-            'label': obj.stats_families_label
-        }
-
-    def get_sqft(self, obj):
-        return {
-            'value': obj.stats_sqft_value,
-            'label': obj.stats_sqft_label
-        }
+        fields = [
+            'stats_experience_value',
+            'stats_experience_label',
+            'stats_projects_value',
+            'stats_projects_label',
+            'stats_families_value',
+            'stats_families_label',
+            'stats_sqft_value',
+            'stats_sqft_label'
+        ]
 
 
 class FooterInfoSerializer(serializers.ModelSerializer):
     """Serializer for footer information only."""
+    
+    footer_email_address = serializers.EmailField(source='footer_email', required=False)
 
     class Meta:
         model = HomePageContent
@@ -61,8 +43,18 @@ class FooterInfoSerializer(serializers.ModelSerializer):
             'footer_office_address',
             'footer_phone_number',
             'footer_email',
+            'footer_email_address',
             'footer_whatsapp_number'
         ]
+        extra_kwargs = {
+            'footer_email': {'write_only': True, 'required': False}
+        }
+    
+    def to_representation(self, instance):
+        """Add footer_email_address to response."""
+        ret = super().to_representation(instance)
+        ret['footer_email_address'] = instance.footer_email
+        return ret
 
 
 class HomePageContentSerializer(serializers.ModelSerializer):
@@ -120,19 +112,65 @@ class HomePageContentUpdateSerializer(serializers.ModelSerializer):
 
 class ProjectBasicSerializer(serializers.ModelSerializer):
     """Basic project info for featured projects."""
+    
+    hero_image_url = serializers.SerializerMethodField()
+    slug = serializers.CharField(read_only=True)
 
     class Meta:
         model = Project
         fields = [
             'id',
             'title',
+            'slug',
             'location',
             'rera_number',
             'description',
             'status',
             'hero_image',
+            'hero_image_url',
             'created_at'
         ]
+    
+    def get_hero_image_url(self, obj):
+        """Return hero_image_url for frontend compatibility."""
+        return obj.hero_image_url or (obj.hero_image_file.url if obj.hero_image_file else None)
+
+
+class CompletedProjectSerializer(serializers.ModelSerializer):
+    """Serializer for completed projects on homepage."""
+    
+    hero_image_url = serializers.SerializerMethodField()
+    slug = serializers.CharField(read_only=True)
+    configurations = serializers.SerializerMethodField()
+    price = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Project
+        fields = [
+            'id',
+            'title',
+            'slug',
+            'location',
+            'rera_number',
+            'status',
+            'hero_image_url',
+            'configurations',
+            'price',
+            'created_at'
+        ]
+    
+    def get_hero_image_url(self, obj):
+        """Return hero_image_url for frontend compatibility."""
+        return obj.hero_image_url or (obj.hero_image_file.url if obj.hero_image_file else None)
+    
+    def get_configurations(self, obj):
+        """Return configurations as array for frontend."""
+        return obj.get_configurations_list()
+    
+    def get_price(self, obj):
+        """Return price if available, otherwise None."""
+        # Price field doesn't exist in Project model, return None
+        return None
 
 
 class FeaturedProjectSerializer(serializers.ModelSerializer):
@@ -182,34 +220,47 @@ class AddFeaturedProjectSerializer(serializers.ModelSerializer):
 
 
 class TestimonialDisplaySerializer(serializers.ModelSerializer):
-    """Serializer for displaying testimonials on homepage."""
+    """Serializer for displaying testimonials on homepage - matches frontend interface."""
 
-    project_title = serializers.CharField(source='project.title', read_only=True)
-    project_location = serializers.CharField(source='project.location', read_only=True)
+    name = serializers.CharField(source='customer_name', read_only=True)
+    testimonial_text = serializers.CharField(source='quote', read_only=True)
+    avatar_url = serializers.CharField(source='customer_photo', read_only=True, allow_null=True)
+    project = serializers.SerializerMethodField()
+    rating = serializers.IntegerField(default=5, read_only=True)  # Default rating for compatibility
 
     class Meta:
         model = Testimonial
         fields = [
             'id',
-            'customer_name',
-            'project_title',
-            'project_location',
-            'quote',
-            'customer_photo',
+            'name',
+            'testimonial_text',
+            'rating',
+            'avatar_url',
+            'project',
             'display_order'
         ]
+    
+    def get_project(self, obj):
+        """Return project as nested object for frontend compatibility."""
+        if obj.project:
+            return {
+                'id': obj.project.id,
+                'title': obj.project.title
+            }
+        return None
 
 
 class CompleteHomePageSerializer(serializers.Serializer):
     """
     Complete homepage data in a single optimized API call.
-    Combines hero section, statistics, featured projects, and testimonials.
+    Combines hero section, statistics, featured projects, completed projects, and testimonials.
+    Note: Footer data is managed separately via contact settings API.
     """
 
     hero_section = serializers.SerializerMethodField()
     statistics = serializers.SerializerMethodField()
-    footer = serializers.SerializerMethodField()
     featured_projects = serializers.SerializerMethodField()
+    completed_projects = serializers.SerializerMethodField()
     testimonials = serializers.SerializerMethodField()
 
     def get_hero_section(self, obj):
@@ -218,15 +269,22 @@ class CompleteHomePageSerializer(serializers.Serializer):
     def get_statistics(self, obj):
         return StatisticsSectionSerializer(obj).data
 
-    def get_footer(self, obj):
-        return FooterInfoSerializer(obj).data
-
     def get_featured_projects(self, obj):
         featured = FeaturedProject.objects.filter(
             is_active=True,
-            project__is_deleted=False
+            project__is_deleted=False,
+            project__status__in=['ongoing', 'completed']  # Exclude upcoming projects
         ).select_related('project').order_by('display_order')[:6]
         return FeaturedProjectSerializer(featured, many=True).data
+
+    def get_completed_projects(self, obj):
+        """Get completed projects for homepage display."""
+        from .models import Project
+        completed = Project.objects.filter(
+            status='completed',
+            is_deleted=False
+        ).order_by('-created_at')[:6]
+        return CompletedProjectSerializer(completed, many=True).data
 
     def get_testimonials(self, obj):
         testimonials = Testimonial.objects.filter(
@@ -234,3 +292,33 @@ class CompleteHomePageSerializer(serializers.Serializer):
             is_deleted=False
         ).select_related('project').order_by('display_order', '-created_at')[:10]
         return TestimonialDisplaySerializer(testimonials, many=True).data
+
+
+class PageHeroImagesSerializer(serializers.ModelSerializer):
+    """Serializer for page hero images (Projects, About, Contact pages)."""
+    
+    def to_representation(self, instance):
+        """Convert relative URLs to absolute URLs."""
+        data = super().to_representation(instance)
+        request = self.context.get('request')
+        
+        for field in ['projects_hero_image_url', 'about_hero_image_url', 'about_our_story_image_url', 'contact_hero_image_url']:
+            url = data.get(field)
+            if url and not url.startswith('http'):
+                if request:
+                    data[field] = request.build_absolute_uri(url)
+                else:
+                    from django.conf import settings
+                    base_url = getattr(settings, 'BASE_URL', 'http://localhost:8000')
+                    data[field] = f"{base_url}{url}"
+        
+        return data
+
+    class Meta:
+        model = PageHeroImages
+        fields = [
+            'projects_hero_image_url',
+            'about_hero_image_url',
+            'about_our_story_image_url',
+            'contact_hero_image_url'
+        ]

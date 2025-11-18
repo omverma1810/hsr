@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from django.db import transaction
+from django.db.models import Max
 from .models import (
     Project, ProjectGalleryImage, ProjectFloorPlan,
     PROJECT_CONFIGURATIONS, PROJECT_AMENITIES
@@ -17,8 +18,17 @@ class ProjectGalleryImageSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'image']
 
     def get_image(self, obj):
-        """Return the actual image URL."""
-        return obj.image
+        """Return the actual image URL (absolute URL)."""
+        image_url = obj.image
+        if image_url and not image_url.startswith('http'):
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(image_url)
+            # Fallback: construct URL from settings
+            from django.conf import settings
+            base_url = getattr(settings, 'BASE_URL', 'http://localhost:8000')
+            return f"{base_url}{image_url}"
+        return image_url
 
 
 class ProjectFloorPlanSerializer(serializers.ModelSerializer):
@@ -32,14 +42,26 @@ class ProjectFloorPlanSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'file_path']
 
     def get_file_path(self, obj):
-        """Return the actual file URL."""
-        return obj.file_path
+        """Return the actual file URL (absolute URL)."""
+        file_url = obj.file_path
+        if file_url and not file_url.startswith('http'):
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(file_url)
+            # Fallback: construct URL from settings
+            from django.conf import settings
+            base_url = getattr(settings, 'BASE_URL', 'http://localhost:8000')
+            return f"{base_url}{file_url}"
+        return file_url
 
 
 class ProjectListSerializer(serializers.ModelSerializer):
     """Serializer for project list view (lightweight)."""
 
     hero_image = serializers.SerializerMethodField()
+    hero_image_url = serializers.SerializerMethodField()
+    configurations = serializers.SerializerMethodField()
+    amenities = serializers.SerializerMethodField()
     configurations_list = serializers.SerializerMethodField()
     amenities_list = serializers.SerializerMethodField()
     created_by_name = serializers.CharField(source='created_by.full_name', read_only=True)
@@ -48,12 +70,45 @@ class ProjectListSerializer(serializers.ModelSerializer):
         model = Project
         fields = [
             'id', 'title', 'slug', 'location', 'rera_number', 'status',
-            'hero_image', 'is_featured', 'configurations_list', 'amenities_list',
+            'hero_image', 'hero_image_url', 'is_featured', 
+            'configurations', 'configurations_list', 
+            'amenities', 'amenities_list',
             'view_count', 'created_by_name', 'created_at', 'updated_at'
         ]
 
     def get_hero_image(self, obj):
-        return obj.hero_image
+        """Return hero image URL (absolute URL)."""
+        hero_image_url = obj.hero_image
+        if hero_image_url and not hero_image_url.startswith('http'):
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(hero_image_url)
+            # Fallback: construct URL from settings
+            from django.conf import settings
+            base_url = getattr(settings, 'BASE_URL', 'http://localhost:8000')
+            return f"{base_url}{hero_image_url}"
+        return hero_image_url
+
+    def get_hero_image_url(self, obj):
+        """Return hero_image_url for frontend compatibility (absolute URL)."""
+        hero_url = obj.hero_image_url or (obj.hero_image_file.url if obj.hero_image_file else None)
+        if hero_url and not hero_url.startswith('http'):
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(hero_url)
+            # Fallback: construct URL from settings
+            from django.conf import settings
+            base_url = getattr(settings, 'BASE_URL', 'http://localhost:8000')
+            return f"{base_url}{hero_url}"
+        return hero_url
+
+    def get_configurations(self, obj):
+        """Return configurations as array for frontend."""
+        return obj.get_configurations_list()
+
+    def get_amenities(self, obj):
+        """Return amenities as array for frontend."""
+        return obj.get_amenities_list()
 
     def get_configurations_list(self, obj):
         return obj.get_configurations_list()
@@ -66,9 +121,12 @@ class ProjectDetailSerializer(serializers.ModelSerializer):
     """Serializer for detailed project view."""
 
     hero_image = serializers.SerializerMethodField()
+    hero_image_url = serializers.SerializerMethodField()
     brochure = serializers.SerializerMethodField()
     gallery_images = ProjectGalleryImageSerializer(many=True, read_only=True)
     floor_plans = ProjectFloorPlanSerializer(many=True, read_only=True)
+    configurations = serializers.SerializerMethodField()
+    amenities = serializers.SerializerMethodField()
     configurations_list = serializers.SerializerMethodField()
     amenities_list = serializers.SerializerMethodField()
     created_by_name = serializers.CharField(source='created_by.full_name', read_only=True)
@@ -95,10 +153,51 @@ class ProjectDetailSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'slug', 'view_count', 'created_at', 'updated_at']
 
     def get_hero_image(self, obj):
-        return obj.hero_image
+        """Return hero image URL (absolute URL)."""
+        hero_image_url = obj.hero_image
+        if hero_image_url and not hero_image_url.startswith('http'):
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(hero_image_url)
+            # Fallback: construct URL from settings
+            from django.conf import settings
+            base_url = getattr(settings, 'BASE_URL', 'http://localhost:8000')
+            return f"{base_url}{hero_image_url}"
+        return hero_image_url
+
+    def get_hero_image_url(self, obj):
+        """Return hero_image_url for frontend compatibility (absolute URL)."""
+        hero_url = obj.hero_image_url or (obj.hero_image_file.url if obj.hero_image_file else None)
+        if hero_url and not hero_url.startswith('http'):
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(hero_url)
+            # Fallback: construct URL from settings
+            from django.conf import settings
+            base_url = getattr(settings, 'BASE_URL', 'http://localhost:8000')
+            return f"{base_url}{hero_url}"
+        return hero_url
 
     def get_brochure(self, obj):
-        return obj.brochure
+        """Return brochure URL (absolute URL)."""
+        brochure_url = obj.brochure
+        if brochure_url and not brochure_url.startswith('http'):
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(brochure_url)
+            # Fallback: construct URL from settings
+            from django.conf import settings
+            base_url = getattr(settings, 'BASE_URL', 'http://localhost:8000')
+            return f"{base_url}{brochure_url}"
+        return brochure_url
+
+    def get_configurations(self, obj):
+        """Return configurations as array for frontend."""
+        return obj.get_configurations_list()
+
+    def get_amenities(self, obj):
+        """Return amenities as array for frontend."""
+        return obj.get_amenities_list()
 
     def get_configurations_list(self, obj):
         return obj.get_configurations_list()
@@ -183,6 +282,7 @@ class ProjectCreateUpdateSerializer(serializers.ModelSerializer):
         """Create project with configurations and amenities."""
         configurations_list = validated_data.pop('configurations_list', [])
         amenities_list = validated_data.pop('amenities_list', [])
+        is_featured = validated_data.pop('is_featured', False)
 
         # Convert lists to dict format if provided
         if configurations_list:
@@ -197,12 +297,29 @@ class ProjectCreateUpdateSerializer(serializers.ModelSerializer):
             validated_data['created_by'] = request.user
             validated_data['updated_by'] = request.user
 
-        return super().create(validated_data)
+        # Create project
+        project = super().create(validated_data)
+
+        # Create FeaturedProject entry if is_featured is True
+        if is_featured:
+            from .models import FeaturedProject
+            # Get the highest display_order and add 1
+            max_order = FeaturedProject.objects.aggregate(
+                max_order=Max('display_order')
+            )['max_order'] or 0
+            FeaturedProject.objects.create(
+                project=project,
+                display_order=max_order + 1,
+                is_active=True
+            )
+
+        return project
 
     def update(self, instance, validated_data):
         """Update project with configurations and amenities."""
         configurations_list = validated_data.pop('configurations_list', None)
         amenities_list = validated_data.pop('amenities_list', None)
+        is_featured = validated_data.pop('is_featured', None)
 
         # Update configurations if provided as list
         if configurations_list is not None:
@@ -217,7 +334,37 @@ class ProjectCreateUpdateSerializer(serializers.ModelSerializer):
         if request and request.user:
             validated_data['updated_by'] = request.user
 
-        return super().update(instance, validated_data)
+        # Update project
+        project = super().update(instance, validated_data)
+
+        # Handle FeaturedProject entry based on is_featured status
+        from .models import FeaturedProject
+        
+        if is_featured is True:
+            # Create FeaturedProject entry if it doesn't exist
+            try:
+                featured_entry = project.featured_placement
+                # Ensure existing entry is active
+                featured_entry.is_active = True
+                featured_entry.save()
+            except FeaturedProject.DoesNotExist:
+                # Get the highest display_order and add 1
+                max_order = FeaturedProject.objects.aggregate(
+                    max_order=Max('display_order')
+                )['max_order'] or 0
+                FeaturedProject.objects.create(
+                    project=project,
+                    display_order=max_order + 1,
+                    is_active=True
+                )
+        elif is_featured is False:
+            # Remove FeaturedProject entry if is_featured is set to False
+            try:
+                project.featured_placement.delete()
+            except FeaturedProject.DoesNotExist:
+                pass  # Already not featured, nothing to do
+
+        return project
 
 
 class AddGalleryImageSerializer(serializers.Serializer):

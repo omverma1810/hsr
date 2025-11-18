@@ -9,7 +9,7 @@ class AdminUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = AdminUser
-        fields = ['id', 'email', 'full_name', 'role', 'is_active', 'last_login', 'date_joined']
+        fields = ['id', 'email', 'full_name', 'role', 'is_active', 'is_staff', 'last_login', 'date_joined']
         read_only_fields = ['id', 'last_login', 'date_joined']
 
 
@@ -65,6 +65,44 @@ class ChangePasswordSerializer(serializers.Serializer):
     def save(self):
         """Update user password."""
         user = self.context['request'].user
+        user.set_password(self.validated_data['new_password'])
+        user.save()
+        return user
+
+
+class ResetPasswordSerializer(serializers.Serializer):
+    """Serializer for resetting password (without current password)."""
+    email = serializers.EmailField(required=True)
+    new_password = serializers.CharField(write_only=True, required=True)
+    confirm_password = serializers.CharField(write_only=True, required=True)
+
+    def validate_email(self, value):
+        """Validate that email exists and belongs to an admin user."""
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        try:
+            user = User.objects.get(email=value, is_staff=True)
+        except User.DoesNotExist:
+            raise serializers.ValidationError('No admin account found with this email address.')
+        return value
+
+    def validate(self, data):
+        """Validate password matching and complexity."""
+        if data['new_password'] != data['confirm_password']:
+            raise serializers.ValidationError({'confirm_password': 'Passwords do not match'})
+
+        # Validate password complexity
+        password_errors = validate_password(data['new_password'])
+        if password_errors:
+            raise serializers.ValidationError({'new_password': password_errors})
+
+        return data
+
+    def save(self):
+        """Update user password."""
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        user = User.objects.get(email=self.validated_data['email'], is_staff=True)
         user.set_password(self.validated_data['new_password'])
         user.save()
         return user

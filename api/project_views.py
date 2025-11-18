@@ -1,6 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import status
+from rest_framework.parsers import MultiPartParser, FormParser
 from django.db.models import Q, Count, Prefetch
 from django.core.paginator import Paginator, EmptyPage
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse
@@ -30,6 +31,8 @@ class ProjectsListView(APIView):
     GET: Public access (shows only non-deleted projects)
     POST: Admin only (create new project)
     """
+    
+    parser_classes = [MultiPartParser, FormParser]
 
     def get_permissions(self):
         """Public GET, admin POST."""
@@ -47,6 +50,7 @@ class ProjectsListView(APIView):
             OpenApiParameter('page', int, description='Page number'),
             OpenApiParameter('page_size', int, description='Items per page (10/25/50/100)'),
             OpenApiParameter('include_deleted', bool, description='Include deleted projects (admin only)'),
+            OpenApiParameter('include_upcoming', bool, description='Include upcoming projects (admin only, default: false)'),
         ],
         responses={200: ProjectListSerializer(many=True)},
         description="List all projects with advanced filtering and pagination"
@@ -54,10 +58,13 @@ class ProjectsListView(APIView):
     def get(self, request):
         """List projects with filtering."""
         try:
-            # Base queryset
+            # Base queryset - always exclude upcoming projects for public API
+            # Admins can use include_upcoming parameter to see upcoming projects
+            include_upcoming = request.query_params.get('include_upcoming', 'false').lower() == 'true'
+            include_deleted = request.query_params.get('include_deleted', 'false').lower() == 'true'
+            
             if request.user.is_authenticated and request.user.is_staff:
                 # Admin can see deleted projects if requested
-                include_deleted = request.query_params.get('include_deleted', 'false').lower() == 'true'
                 if include_deleted:
                     queryset = Project.all_objects.all()
                 else:
@@ -65,6 +72,10 @@ class ProjectsListView(APIView):
             else:
                 # Public only sees non-deleted projects
                 queryset = Project.objects.all()
+            
+            # Exclude upcoming projects unless explicitly requested (admin only)
+            if not include_upcoming:
+                queryset = queryset.exclude(status='upcoming')
 
             # Optimize queries
             queryset = queryset.select_related('created_by')
@@ -114,22 +125,22 @@ class ProjectsListView(APIView):
             paginator = Paginator(queryset, page_size)
 
             try:
-                projects = paginator.page(page)
+                projects_page = paginator.page(page)
             except EmptyPage:
-                projects = paginator.page(paginator.num_pages)
+                projects_page = paginator.page(paginator.num_pages)
 
-            serializer = ProjectListSerializer(projects, many=True)
+            serializer = ProjectListSerializer(projects_page.object_list, many=True, context={'request': request})
 
             return success_response(
                 data={
                     'results': serializer.data,
                     'pagination': {
-                        'current_page': projects.number,
+                        'current_page': projects_page.number,
                         'total_pages': paginator.num_pages,
                         'total_items': paginator.count,
                         'page_size': page_size,
-                        'has_next': projects.has_next(),
-                        'has_previous': projects.has_previous(),
+                        'has_next': projects_page.has_next(),
+                        'has_previous': projects_page.has_previous(),
                     }
                 },
                 message=f"Retrieved {len(serializer.data)} projects"
@@ -156,7 +167,7 @@ class ProjectsListView(APIView):
 
             if serializer.is_valid():
                 project = serializer.save()
-                response_serializer = ProjectDetailSerializer(project)
+                response_serializer = ProjectDetailSerializer(project, context={'request': request})
 
                 return success_response(
                     data=response_serializer.data,
@@ -183,6 +194,8 @@ class ProjectDetailView(APIView):
     PUT/PATCH: Admin only
     DELETE: Admin only (soft delete)
     """
+    
+    parser_classes = [MultiPartParser, FormParser]
 
     def get_permissions(self):
         """Public GET, admin PUT/DELETE."""
@@ -201,12 +214,16 @@ class ProjectDetailView(APIView):
                     'floor_plans'
                 ).get(pk=pk)
             else:
-                return Project.objects.select_related(
+                queryset = Project.objects.select_related(
                     'created_by', 'updated_by'
                 ).prefetch_related(
                     'gallery_images',
                     'floor_plans'
-                ).get(pk=pk)
+                )
+                # For public access, exclude upcoming projects
+                if not (self.request.user.is_authenticated and self.request.user.is_staff):
+                    queryset = queryset.exclude(status='upcoming')
+                return queryset.get(pk=pk)
         except Project.DoesNotExist:
             return None
 
@@ -230,7 +247,7 @@ class ProjectDetailView(APIView):
             if not (request.user.is_authenticated and request.user.is_staff):
                 project.increment_view_count()
 
-            serializer = ProjectDetailSerializer(project)
+            serializer = ProjectDetailSerializer(project, context={'request': request})
 
             return success_response(
                 data=serializer.data,
@@ -269,7 +286,7 @@ class ProjectDetailView(APIView):
 
             if serializer.is_valid():
                 project = serializer.save()
-                response_serializer = ProjectDetailSerializer(project)
+                response_serializer = ProjectDetailSerializer(project, context={'request': request})
 
                 return success_response(
                     data=response_serializer.data,
@@ -331,6 +348,7 @@ class ProjectDetailView(APIView):
 class ProjectGalleryView(APIView):
     """Manage project gallery images."""
     permission_classes = [IsAuthenticated, IsAdminUser]
+    parser_classes = [MultiPartParser, FormParser]
 
     @extend_schema(
         responses={200: ProjectGalleryImageSerializer(many=True)},
@@ -341,7 +359,7 @@ class ProjectGalleryView(APIView):
         try:
             project = Project.objects.get(pk=pk)
             images = project.gallery_images.filter(is_deleted=False).order_by('display_order', 'created_at')
-            serializer = ProjectGalleryImageSerializer(images, many=True)
+            serializer = ProjectGalleryImageSerializer(images, many=True, context={'request': request})
 
             return success_response(
                 data=serializer.data,
@@ -371,7 +389,7 @@ class ProjectGalleryView(APIView):
                     **serializer.validated_data
                 )
 
-                response_serializer = ProjectGalleryImageSerializer(image)
+                response_serializer = ProjectGalleryImageSerializer(image, context={'request': request})
 
                 return success_response(
                     data=response_serializer.data,
@@ -404,7 +422,7 @@ class ProjectGalleryImageDetailView(APIView):
         """Update gallery image."""
         try:
             image = ProjectGalleryImage.objects.get(pk=image_id, project_id=pk)
-            serializer = ProjectGalleryImageSerializer(image, data=request.data, partial=True)
+            serializer = ProjectGalleryImageSerializer(image, data=request.data, partial=True, context={'request': request})
 
             if serializer.is_valid():
                 serializer.save()
@@ -448,6 +466,7 @@ class ProjectGalleryImageDetailView(APIView):
 class ProjectFloorPlansView(APIView):
     """Manage project floor plans."""
     permission_classes = [IsAuthenticated, IsAdminUser]
+    parser_classes = [MultiPartParser, FormParser]
 
     @extend_schema(
         responses={200: ProjectFloorPlanSerializer(many=True)},
@@ -458,7 +477,7 @@ class ProjectFloorPlansView(APIView):
         try:
             project = Project.objects.get(pk=pk)
             floor_plans = project.floor_plans.filter(is_deleted=False).order_by('display_order', 'created_at')
-            serializer = ProjectFloorPlanSerializer(floor_plans, many=True)
+            serializer = ProjectFloorPlanSerializer(floor_plans, many=True, context={'request': request})
 
             return success_response(
                 data=serializer.data,
@@ -488,7 +507,7 @@ class ProjectFloorPlansView(APIView):
                     **serializer.validated_data
                 )
 
-                response_serializer = ProjectFloorPlanSerializer(floor_plan)
+                response_serializer = ProjectFloorPlanSerializer(floor_plan, context={'request': request})
 
                 return success_response(
                     data=response_serializer.data,
@@ -521,7 +540,7 @@ class ProjectFloorPlanDetailView(APIView):
         """Update floor plan."""
         try:
             floor_plan = ProjectFloorPlan.objects.get(pk=plan_id, project_id=pk)
-            serializer = ProjectFloorPlanSerializer(floor_plan, data=request.data, partial=True)
+            serializer = ProjectFloorPlanSerializer(floor_plan, data=request.data, partial=True, context={'request': request})
 
             if serializer.is_valid():
                 serializer.save()
@@ -567,8 +586,25 @@ class ProjectRestoreView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     @extend_schema(
-        responses={200: ProjectDetailSerializer},
-        description="Restore a soft-deleted project"
+        responses={
+            200: OpenApiResponse(description='Project restored successfully - Returns the restored project details.'),
+            400: OpenApiResponse(description='Bad request - Project is not deleted or invalid request.'),
+            404: OpenApiResponse(description='Not found - Project does not exist.'),
+        },
+        description='''
+        **Restore Project**
+        
+        Restore a soft-deleted project. This will set `is_deleted=False` and make the project visible again.
+        
+        **Use Cases:**
+        - Recover accidentally deleted projects
+        - Restore projects from trash
+        
+        **Note:** Only soft-deleted projects can be restored. If a project was never deleted, you'll get a 400 error.
+        
+        **Authentication Required:** Yes (Admin only)
+        ''',
+        tags=['Projects']
     )
     def post(self, request, pk):
         """Restore deleted project."""
@@ -583,7 +619,7 @@ class ProjectRestoreView(APIView):
                 )
 
             project.restore()
-            serializer = ProjectDetailSerializer(project)
+            serializer = ProjectDetailSerializer(project, context={'request': request})
 
             return success_response(
                 data=serializer.data,
@@ -602,8 +638,31 @@ class ProjectCloneView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     @extend_schema(
-        responses={201: ProjectDetailSerializer},
-        description="Clone an existing project"
+        responses={
+            201: OpenApiResponse(description='Project cloned successfully - Returns the new cloned project with "(Copy)" suffix in title. Gallery images and floor plans are also cloned.'),
+            404: OpenApiResponse(description='Not found - Original project does not exist.'),
+        },
+        description='''
+        **Clone Project**
+        
+        Create a duplicate of an existing project. This is useful for creating similar projects or templates.
+        
+        **What gets cloned:**
+        - All project fields (title gets "(Copy)" suffix)
+        - RERA number gets "-COPY" suffix (you must update this to make it unique)
+        - Gallery images (all images are copied)
+        - Floor plans (all plans are copied)
+        
+        **What doesn't get cloned:**
+        - Featured status (new project is not featured by default)
+        - View count (starts at 0)
+        - Leads and testimonials (not associated with cloned project)
+        
+        **Important:** After cloning, you must update the RERA number to make it unique before saving.
+        
+        **Authentication Required:** Yes (Admin only)
+        ''',
+        tags=['Projects']
     )
     def post(self, request, pk):
         """Clone project."""
@@ -724,6 +783,43 @@ class ExportProjectsView(APIView):
     """Export projects to CSV."""
     permission_classes = [IsAuthenticated, IsAdminUser]
 
+    @extend_schema(
+        responses={
+            200: OpenApiResponse(description='CSV file download - Returns a CSV file with all projects data.'),
+            401: OpenApiResponse(description='Unauthorized - Invalid or expired token.'),
+            403: OpenApiResponse(description='Forbidden - Admin access required.'),
+        },
+        description='''
+        **Export Projects to CSV**
+        
+        Export all projects to a CSV file for external analysis or backup.
+        
+        **CSV Columns:**
+        - ID
+        - Title
+        - Location
+        - RERA Number
+        - Status
+        - Is Featured
+        - View Count
+        - Created By
+        - Created At
+        
+        **Response:**
+        - Content-Type: `text/csv`
+        - Content-Disposition: `attachment; filename="projects_export.csv"`
+        - File download will start automatically
+        
+        **Use Cases:**
+        - Data backup
+        - External analysis (Excel, Google Sheets)
+        - Reporting
+        - Data migration
+        
+        **Authentication Required:** Yes (Admin only)
+        ''',
+        tags=['Projects']
+    )
     def get(self, request):
         """Export projects to CSV."""
         try:

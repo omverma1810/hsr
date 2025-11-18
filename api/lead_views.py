@@ -1,640 +1,507 @@
-"""
-Views for Lead Management (Phase 5).
-Handles lead CRUD operations with priority, follow-ups, and analytics.
-"""
-
-from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework import status
 from django.db.models import Q, Count
-from django.utils import timezone
+from django.core.paginator import Paginator, EmptyPage
 from django.http import HttpResponse
 import csv
-from datetime import timedelta
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse
 
-from .models import Lead, Project, AdminUser
-from .lead_serializers import (
-    LeadListSerializer,
-    LeadDetailSerializer,
-    LeadCreateSerializer,
-    LeadUpdateSerializer,
-    LeadStatusUpdateSerializer,
-    LeadAddNoteSerializer,
-    LeadStatisticsSerializer,
-    BulkLeadActionSerializer,
-)
+from .models import Lead, Project
+from .lead_serializers import LeadSerializer, LeadListSerializer
 from .utils import success_response, error_response
 from .permissions import IsAdminUser
 
 
 class LeadsListView(APIView):
-    """
-    GET: List all leads with filtering, search, sorting, pagination (admin only)
-    POST: Create new lead (public - contact form)
-    """
-
+    """List and create leads."""
+    
     def get_permissions(self):
-        """Admin only for GET, public for POST."""
-        if self.request.method == 'GET':
-            return [IsAdminUser()]
-        return [AllowAny()]
-
+        """Public POST (for contact forms), admin GET."""
+        if self.request.method == 'POST':
+            return [AllowAny()]
+        return [IsAuthenticated(), IsAdminUser()]
+    
+    @extend_schema(
+        parameters=[
+            OpenApiParameter('status', str, description='Filter by status (new/contacted/qualified/closed)'),
+            OpenApiParameter('source', str, description='Filter by source (contact_form/whatsapp/phone_call/walk_in)'),
+            OpenApiParameter('project_id', int, description='Filter by project ID'),
+            OpenApiParameter('search', str, description='Search in name, email, phone, message'),
+            OpenApiParameter('page', int, description='Page number'),
+            OpenApiParameter('page_size', int, description='Items per page (10/25/50/100)'),
+            OpenApiParameter('include_deleted', bool, description='Include deleted leads (admin only)'),
+        ],
+        responses={200: LeadListSerializer(many=True)},
+        description="List all leads with filtering and pagination"
+    )
     def get(self, request):
-        """Get all leads with advanced filtering and pagination (admin only)."""
+        """List leads with filtering."""
         try:
-            # Query parameters
+            include_deleted = request.query_params.get('include_deleted', 'false').lower() == 'true'
+            
+            if include_deleted and request.user.is_authenticated and request.user.is_staff:
+                queryset = Lead.all_objects.all()
+            else:
+                queryset = Lead.objects.all()
+            
+            # Filtering
             status_filter = request.query_params.get('status')
-            priority = request.query_params.get('priority')
-            source = request.query_params.get('source')
-            project_id = request.query_params.get('project')
-            contacted_by = request.query_params.get('contacted_by')
-            search = request.query_params.get('search')
-            overdue_only = request.query_params.get('overdue_only')
-            sort_by = request.query_params.get('sort_by', '-created_at')
-            page = int(request.query_params.get('page', 1))
-            page_size = int(request.query_params.get('page_size', 25))
-
-            # Validate page_size
-            if page_size not in [10, 25, 50, 100]:
-                page_size = 25
-
-            # Start with all non-deleted leads
-            queryset = Lead.objects.select_related(
-                'project',
-                'contacted_by'
-            ).all()
-
-            # Apply filters
             if status_filter:
                 queryset = queryset.filter(status=status_filter)
-
-            if priority:
-                queryset = queryset.filter(priority=priority)
-
-            if source:
-                queryset = queryset.filter(source=source)
-
+            
+            source_filter = request.query_params.get('source')
+            if source_filter:
+                queryset = queryset.filter(source=source_filter)
+            
+            project_id = request.query_params.get('project_id')
             if project_id:
                 queryset = queryset.filter(project_id=project_id)
-
-            if contacted_by:
-                queryset = queryset.filter(contacted_by_id=contacted_by)
-
-            if overdue_only and overdue_only.lower() == 'true':
-                queryset = queryset.filter(
-                    next_follow_up__isnull=False,
-                    next_follow_up__lt=timezone.now()
-                )
-
-            # Search
+            
+            # Searching
+            search = request.query_params.get('search')
             if search:
                 queryset = queryset.filter(
                     Q(name__icontains=search) |
                     Q(email__icontains=search) |
                     Q(phone__icontains=search) |
-                    Q(message__icontains=search) |
-                    Q(project__title__icontains=search)
+                    Q(message__icontains=search)
                 )
-
-            # Sorting
-            allowed_sort_fields = [
-                'created_at', '-created_at',
-                'priority', '-priority',
-                'status', '-status',
-                'next_follow_up', '-next_follow_up',
-                'name', '-name',
-            ]
-            if sort_by in allowed_sort_fields:
-                queryset = queryset.order_by(sort_by)
-
-            # Count before pagination
-            total = queryset.count()
-
+            
+            # Ordering
+            queryset = queryset.select_related('project', 'contacted_by').order_by('-created_at')
+            
             # Pagination
-            start = (page - 1) * page_size
-            end = start + page_size
-            leads = queryset[start:end]
-
-            # Serialize
-            serializer = LeadListSerializer(leads, many=True)
-
+            page = int(request.query_params.get('page', 1))
+            page_size = int(request.query_params.get('page_size', 25))
+            
+            valid_page_sizes = [10, 25, 50, 100]
+            if page_size not in valid_page_sizes:
+                page_size = 25
+            
+            paginator = Paginator(queryset, page_size)
+            
+            try:
+                leads_page = paginator.page(page)
+            except EmptyPage:
+                leads_page = paginator.page(paginator.num_pages)
+            
+            serializer = LeadListSerializer(leads_page.object_list, many=True)
+            
             return success_response(
                 data={
-                    'leads': serializer.data,
+                    'results': serializer.data,
                     'pagination': {
-                        'total': total,
-                        'page': page,
+                        'current_page': leads_page.number,
+                        'total_pages': paginator.num_pages,
+                        'total_items': paginator.count,
                         'page_size': page_size,
-                        'total_pages': (total + page_size - 1) // page_size,
+                        'has_next': leads_page.has_next(),
+                        'has_previous': leads_page.has_previous(),
                     }
                 },
-                message='Leads retrieved successfully'
+                message=f"Retrieved {len(serializer.data)} leads"
             )
-
+        
         except Exception as e:
             return error_response(
-                message='Failed to retrieve leads',
-                errors={'error': str(e)},
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+                errors={'detail': str(e)},
+                message="Failed to retrieve leads"
             )
-
+    
+    @extend_schema(
+        request=LeadSerializer,
+        responses={201: LeadSerializer},
+        description="Create a new lead (public access for contact forms)"
+    )
     def post(self, request):
-        """Create new lead from contact form (public)."""
+        """Create a new lead."""
         try:
-            serializer = LeadCreateSerializer(data=request.data)
-
+            serializer = LeadSerializer(data=request.data, context={'request': request})
+            
             if serializer.is_valid():
                 lead = serializer.save()
-
-                # Return simple success for public endpoint
+                response_serializer = LeadSerializer(lead)
                 return success_response(
-                    data={'id': lead.id},
-                    message='Thank you for your inquiry! We will contact you soon.',
+                    data=response_serializer.data,
+                    message="Lead created successfully",
                     status_code=status.HTTP_201_CREATED
                 )
-
+            
             return error_response(
-                message='Validation failed',
                 errors=serializer.errors,
-                status_code=status.HTTP_400_BAD_REQUEST
+                message="Failed to create lead"
             )
-
+        
         except Exception as e:
             return error_response(
-                message='Failed to submit inquiry',
-                errors={'error': str(e)},
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+                errors={'detail': str(e)},
+                message="Failed to create lead"
             )
 
 
 class LeadDetailView(APIView):
-    """
-    GET: Get single lead details (admin only)
-    PUT: Update lead (admin only)
-    DELETE: Delete lead (admin only, soft delete)
-    """
-
-    permission_classes = [IsAdminUser]
-
+    """Retrieve, update, or delete a lead."""
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    
+    def get_object(self, pk, include_deleted=False):
+        """Get lead by ID."""
+        try:
+            if include_deleted:
+                return Lead.all_objects.select_related('project', 'contacted_by').get(pk=pk)
+            return Lead.objects.select_related('project', 'contacted_by').get(pk=pk)
+        except Lead.DoesNotExist:
+            return None
+    
+    @extend_schema(
+        responses={200: LeadSerializer},
+        description="Get lead details (admin only)"
+    )
     def get(self, request, pk):
         """Get lead details."""
+        lead = self.get_object(pk)
+        if not lead:
+            return error_response(
+                errors={'detail': 'Lead not found'},
+                message="Lead not found",
+                status_code=status.HTTP_404_NOT_FOUND
+            )
+        
+        serializer = LeadSerializer(lead)
+        return success_response(
+            data=serializer.data,
+            message="Lead retrieved successfully"
+        )
+    
+    @extend_schema(
+        request=LeadSerializer,
+        responses={200: LeadSerializer},
+        description="Update lead (admin only)"
+    )
+    def put(self, request, pk):
+        """Update lead."""
+        lead = self.get_object(pk)
+        if not lead:
+            return error_response(
+                errors={'detail': 'Lead not found'},
+                message="Lead not found",
+                status_code=status.HTTP_404_NOT_FOUND
+            )
+        
+        serializer = LeadSerializer(lead, data=request.data, partial=True, context={'request': request})
+        if serializer.is_valid():
+            lead = serializer.save()
+            response_serializer = LeadSerializer(lead)
+            return success_response(
+                data=response_serializer.data,
+                message="Lead updated successfully"
+            )
+        
+        return error_response(
+            errors=serializer.errors,
+            message="Failed to update lead"
+        )
+    
+    patch = put  # Support both PUT and PATCH
+    
+    @extend_schema(
+        responses={200: OpenApiResponse(description="Lead deleted successfully")},
+        description="Delete lead (admin only, soft delete)"
+    )
+    def delete(self, request, pk):
+        """Delete lead (soft delete)."""
+        lead = self.get_object(pk)
+        if not lead:
+            return error_response(
+                errors={'detail': 'Lead not found'},
+                message="Lead not found",
+                status_code=status.HTTP_404_NOT_FOUND
+            )
+        
         try:
-            lead = Lead.objects.select_related(
-                'project',
-                'contacted_by'
-            ).get(pk=pk)
-            serializer = LeadDetailSerializer(lead)
+            lead.soft_delete()
+            return success_response(
+                message="Lead deleted successfully"
+            )
+        except Exception as e:
+            return error_response(
+                errors={'detail': str(e)},
+                message="Failed to delete lead"
+            )
 
+
+class LeadStatusView(APIView):
+    """Update lead status."""
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    
+    @extend_schema(
+        request={'status': 'string'},
+        responses={200: LeadSerializer},
+        description="Update lead status (admin only)"
+    )
+    def post(self, request, pk):
+        """Update lead status."""
+        try:
+            lead = Lead.objects.get(pk=pk, is_deleted=False)
+            new_status = request.data.get('status')
+            
+            if not new_status:
+                return error_response(
+                    errors={'status': 'Status is required'},
+                    message="Status is required"
+                )
+            
+            valid_statuses = ['new', 'contacted', 'qualified', 'closed']
+            if new_status not in valid_statuses:
+                return error_response(
+                    errors={'status': f'Invalid status. Must be one of: {", ".join(valid_statuses)}'},
+                    message="Invalid status"
+                )
+            
+            # Update contacted_at when status changes to contacted
+            if new_status == 'contacted' and lead.status != 'contacted':
+                from django.utils import timezone
+                lead.contacted_at = timezone.now()
+                lead.contacted_by = request.user
+            
+            lead.status = new_status
+            lead.save()
+            
+            serializer = LeadSerializer(lead)
             return success_response(
                 data=serializer.data,
-                message='Lead retrieved successfully'
+                message="Lead status updated successfully"
             )
-
+        
         except Lead.DoesNotExist:
             return error_response(
-                message='Lead not found',
+                errors={'detail': 'Lead not found'},
+                message="Lead not found",
                 status_code=status.HTTP_404_NOT_FOUND
             )
         except Exception as e:
             return error_response(
-                message='Failed to retrieve lead',
-                errors={'error': str(e)},
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-
-    def put(self, request, pk):
-        """Update lead (admin only)."""
-        try:
-            lead = Lead.objects.get(pk=pk)
-            serializer = LeadUpdateSerializer(
-                lead,
-                data=request.data,
-                partial=True
-            )
-
-            if serializer.is_valid():
-                serializer.save()
-
-                # Return detailed response
-                detail_serializer = LeadDetailSerializer(lead)
-                return success_response(
-                    data=detail_serializer.data,
-                    message='Lead updated successfully'
-                )
-
-            return error_response(
-                message='Validation failed',
-                errors=serializer.errors,
-                status_code=status.HTTP_400_BAD_REQUEST
-            )
-
-        except Lead.DoesNotExist:
-            return error_response(
-                message='Lead not found',
-                status_code=status.HTTP_404_NOT_FOUND
-            )
-        except Exception as e:
-            return error_response(
-                message='Failed to update lead',
-                errors={'error': str(e)},
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-
-    def delete(self, request, pk):
-        """Soft delete lead (admin only)."""
-        try:
-            lead = Lead.objects.get(pk=pk)
-            lead.soft_delete()
-
-            return success_response(
-                data={'id': pk},
-                message='Lead deleted successfully'
-            )
-
-        except Lead.DoesNotExist:
-            return error_response(
-                message='Lead not found',
-                status_code=status.HTTP_404_NOT_FOUND
-            )
-        except Exception as e:
-            return error_response(
-                message='Failed to delete lead',
-                errors={'error': str(e)},
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-
-
-class LeadStatusUpdateView(APIView):
-    """POST: Update lead status with automatic tracking (admin only)."""
-
-    permission_classes = [IsAdminUser]
-
-    def post(self, request, pk):
-        """Update lead status and track changes."""
-        try:
-            lead = Lead.objects.get(pk=pk)
-            serializer = LeadStatusUpdateSerializer(data=request.data)
-
-            if not serializer.is_valid():
-                return error_response(
-                    message='Validation failed',
-                    errors=serializer.errors,
-                    status_code=status.HTTP_400_BAD_REQUEST
-                )
-
-            new_status = serializer.validated_data['status']
-            notes = serializer.validated_data.get('notes', '')
-            next_follow_up = serializer.validated_data.get('next_follow_up')
-
-            # Update status
-            old_status = lead.status
-            lead.status = new_status
-
-            # If changing to contacted, mark as contacted
-            if new_status == 'contacted' and old_status != 'contacted':
-                lead.mark_contacted(admin_user=request.user)
-
-            # Add notes if provided
-            if notes:
-                timestamp = timezone.now().strftime('%Y-%m-%d %H:%M:%S')
-                note_entry = f"\n[{timestamp}] Status changed from '{old_status}' to '{new_status}': {notes}"
-                lead.notes += note_entry
-
-            # Update follow-up if provided
-            if next_follow_up:
-                lead.next_follow_up = next_follow_up
-
-            lead.save()
-
-            # Return detailed response
-            detail_serializer = LeadDetailSerializer(lead)
-            return success_response(
-                data=detail_serializer.data,
-                message=f'Lead status updated to {new_status}'
-            )
-
-        except Lead.DoesNotExist:
-            return error_response(
-                message='Lead not found',
-                status_code=status.HTTP_404_NOT_FOUND
-            )
-        except Exception as e:
-            return error_response(
-                message='Failed to update lead status',
-                errors={'error': str(e)},
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-
-
-class LeadAddNoteView(APIView):
-    """POST: Add note to lead (admin only)."""
-
-    permission_classes = [IsAdminUser]
-
-    def post(self, request, pk):
-        """Add note to lead."""
-        try:
-            lead = Lead.objects.get(pk=pk)
-            serializer = LeadAddNoteSerializer(data=request.data)
-
-            if not serializer.is_valid():
-                return error_response(
-                    message='Validation failed',
-                    errors=serializer.errors,
-                    status_code=status.HTTP_400_BAD_REQUEST
-                )
-
-            note = serializer.validated_data['note']
-            next_follow_up = serializer.validated_data.get('next_follow_up')
-
-            # Add note with timestamp and user
-            timestamp = timezone.now().strftime('%Y-%m-%d %H:%M:%S')
-            note_entry = f"\n[{timestamp}] {request.user.full_name}: {note}"
-            lead.notes += note_entry
-
-            # Update follow-up if provided
-            if next_follow_up:
-                lead.next_follow_up = next_follow_up
-
-            lead.save()
-
-            # Return detailed response
-            detail_serializer = LeadDetailSerializer(lead)
-            return success_response(
-                data=detail_serializer.data,
-                message='Note added successfully'
-            )
-
-        except Lead.DoesNotExist:
-            return error_response(
-                message='Lead not found',
-                status_code=status.HTTP_404_NOT_FOUND
-            )
-        except Exception as e:
-            return error_response(
-                message='Failed to add note',
-                errors={'error': str(e)},
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+                errors={'detail': str(e)},
+                message="Failed to update lead status"
             )
 
 
 class LeadRestoreView(APIView):
-    """POST: Restore soft-deleted lead (admin only)."""
-
-    permission_classes = [IsAdminUser]
-
+    """Restore a soft-deleted lead."""
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    
+    @extend_schema(
+        responses={
+            200: OpenApiResponse(description='Lead restored successfully - Returns the restored lead details.'),
+            404: OpenApiResponse(description='Not found - Deleted lead does not exist.'),
+        },
+        description='''
+        **Restore Lead**
+        
+        Restore a soft-deleted lead. This will set `is_deleted=False` and make the lead visible again in the leads list.
+        
+        **Use Cases:**
+        - Recover accidentally deleted leads
+        - Restore leads from trash
+        
+        **Note:** Only soft-deleted leads can be restored. If a lead was never deleted, you'll get a 404 error.
+        
+        **Authentication Required:** Yes (Admin only)
+        ''',
+        tags=['Leads']
+    )
     def post(self, request, pk):
-        """Restore soft-deleted lead."""
+        """Restore lead."""
         try:
-            lead = Lead.all_objects.get(pk=pk)
-
-            if not lead.is_deleted:
-                return error_response(
-                    message='Lead is not deleted',
-                    status_code=status.HTTP_400_BAD_REQUEST
-                )
-
+            lead = Lead.all_objects.get(pk=pk, is_deleted=True)
             lead.restore()
-
-            # Return detailed response
-            detail_serializer = LeadDetailSerializer(lead)
+            serializer = LeadSerializer(lead)
             return success_response(
-                data=detail_serializer.data,
-                message='Lead restored successfully'
+                data=serializer.data,
+                message="Lead restored successfully"
             )
-
         except Lead.DoesNotExist:
             return error_response(
-                message='Lead not found',
+                errors={'detail': 'Deleted lead not found'},
+                message="Lead not found",
                 status_code=status.HTTP_404_NOT_FOUND
             )
         except Exception as e:
             return error_response(
-                message='Failed to restore lead',
-                errors={'error': str(e)},
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+                errors={'detail': str(e)},
+                message="Failed to restore lead"
             )
 
 
-class LeadStatisticsView(APIView):
-    """GET: Get lead statistics and analytics (admin only)."""
-
-    permission_classes = [IsAdminUser]
-
-    def get(self, request):
-        """Get comprehensive lead statistics."""
+class LeadNotesView(APIView):
+    """Add or update lead notes."""
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    
+    @extend_schema(
+        request={'notes': 'string'},
+        responses={200: LeadSerializer},
+        description="Update lead notes (admin only)"
+    )
+    def post(self, request, pk):
+        """Update lead notes."""
         try:
-            # All non-deleted leads
-            all_leads = Lead.objects.all()
-            total_leads = all_leads.count()
-
-            # Status breakdown
-            new_leads = all_leads.filter(status='new').count()
-            contacted_leads = all_leads.filter(status='contacted').count()
-            qualified_leads = all_leads.filter(status='qualified').count()
-            closed_leads = all_leads.filter(status='closed').count()
-
-            # Conversion rates
-            contact_rate = (contacted_leads / total_leads * 100) if total_leads > 0 else 0
-            qualification_rate = (qualified_leads / total_leads * 100) if total_leads > 0 else 0
-            close_rate = (closed_leads / total_leads * 100) if total_leads > 0 else 0
-
-            # Priority breakdown
-            urgent_leads = all_leads.filter(priority='urgent').count()
-            high_priority_leads = all_leads.filter(priority='high').count()
-            medium_priority_leads = all_leads.filter(priority='medium').count()
-            low_priority_leads = all_leads.filter(priority='low').count()
-
-            # Follow-up stats
-            leads_with_follow_up = all_leads.filter(next_follow_up__isnull=False).count()
-            overdue_follow_ups = all_leads.filter(
-                next_follow_up__isnull=False,
-                next_follow_up__lt=timezone.now()
-            ).count()
-
-            # Source breakdown
-            source_stats = all_leads.values('source').annotate(count=Count('id'))
-            source_breakdown = {item['source']: item['count'] for item in source_stats}
-
-            # Time-based stats
-            now = timezone.now()
-            today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-            week_start = today_start - timedelta(days=today_start.weekday())
-            month_start = today_start.replace(day=1)
-
-            leads_today = all_leads.filter(created_at__gte=today_start).count()
-            leads_this_week = all_leads.filter(created_at__gte=week_start).count()
-            leads_this_month = all_leads.filter(created_at__gte=month_start).count()
-
-            # Prepare statistics data
-            statistics_data = {
-                'total_leads': total_leads,
-                'new_leads': new_leads,
-                'contacted_leads': contacted_leads,
-                'qualified_leads': qualified_leads,
-                'closed_leads': closed_leads,
-                'contact_rate': round(contact_rate, 2),
-                'qualification_rate': round(qualification_rate, 2),
-                'close_rate': round(close_rate, 2),
-                'urgent_leads': urgent_leads,
-                'high_priority_leads': high_priority_leads,
-                'medium_priority_leads': medium_priority_leads,
-                'low_priority_leads': low_priority_leads,
-                'leads_with_follow_up': leads_with_follow_up,
-                'overdue_follow_ups': overdue_follow_ups,
-                'source_breakdown': source_breakdown,
-                'leads_today': leads_today,
-                'leads_this_week': leads_this_week,
-                'leads_this_month': leads_this_month,
-            }
-
-            serializer = LeadStatisticsSerializer(data=statistics_data)
-            serializer.is_valid()
-
+            lead = Lead.objects.get(pk=pk, is_deleted=False)
+            notes = request.data.get('notes', '')
+            lead.notes = notes
+            lead.save()
+            
+            serializer = LeadSerializer(lead)
             return success_response(
                 data=serializer.data,
-                message='Lead statistics retrieved successfully'
+                message="Lead notes updated successfully"
             )
-
+        except Lead.DoesNotExist:
+            return error_response(
+                errors={'detail': 'Lead not found'},
+                message="Lead not found",
+                status_code=status.HTTP_404_NOT_FOUND
+            )
         except Exception as e:
             return error_response(
-                message='Failed to retrieve lead statistics',
-                errors={'error': str(e)},
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+                errors={'detail': str(e)},
+                message="Failed to update lead notes"
             )
 
 
-class BulkLeadActionsView(APIView):
-    """POST: Perform bulk actions on leads (admin only)."""
-
-    permission_classes = [IsAdminUser]
-
+class BulkLeadsActionView(APIView):
+    """Bulk actions on leads."""
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    
+    @extend_schema(
+        request={
+            'lead_ids': [int],
+            'action': 'string',
+            'status': 'string (optional)'
+        },
+        responses={200: OpenApiResponse(description="Bulk action completed")},
+        description="Perform bulk actions on leads (admin only)"
+    )
     def post(self, request):
-        """Perform bulk actions on multiple leads."""
+        """Perform bulk actions."""
         try:
-            serializer = BulkLeadActionSerializer(data=request.data)
-
-            if not serializer.is_valid():
+            lead_ids = request.data.get('lead_ids', [])
+            action = request.data.get('action')
+            
+            if not lead_ids:
                 return error_response(
-                    message='Validation failed',
-                    errors=serializer.errors,
-                    status_code=status.HTTP_400_BAD_REQUEST
+                    errors={'lead_ids': 'Lead IDs are required'},
+                    message="Lead IDs are required"
                 )
-
-            lead_ids = serializer.validated_data['lead_ids']
-            action = serializer.validated_data['action']
-
-            # Get leads
-            if action in ['delete', 'change_status', 'change_priority', 'assign_contact']:
-                leads = Lead.objects.filter(id__in=lead_ids)
-            else:  # restore
-                leads = Lead.all_objects.filter(id__in=lead_ids)
-
-            if not leads.exists():
+            
+            if not action:
                 return error_response(
-                    message='No leads found with provided IDs',
-                    status_code=status.HTTP_404_NOT_FOUND
+                    errors={'action': 'Action is required'},
+                    message="Action is required"
                 )
-
-            # Perform action
-            updated_count = 0
-
+            
+            leads = Lead.objects.filter(id__in=lead_ids, is_deleted=False)
+            
             if action == 'delete':
+                count = 0
                 for lead in leads:
                     lead.soft_delete()
-                    updated_count += 1
-
+                    count += 1
+                return success_response(
+                    data={'count': count},
+                    message=f"{count} lead(s) deleted successfully"
+                )
+            
             elif action == 'restore':
-                for lead in leads:
-                    if lead.is_deleted:
-                        lead.restore()
-                        updated_count += 1
-
+                deleted_leads = Lead.all_objects.filter(id__in=lead_ids, is_deleted=True)
+                count = 0
+                for lead in deleted_leads:
+                    lead.restore()
+                    count += 1
+                return success_response(
+                    data={'count': count},
+                    message=f"{count} lead(s) restored successfully"
+                )
+            
             elif action == 'change_status':
-                new_status = serializer.validated_data['status']
-                updated_count = leads.update(status=new_status)
-
-            elif action == 'change_priority':
-                new_priority = serializer.validated_data['priority']
-                updated_count = leads.update(priority=new_priority)
-
-            elif action == 'assign_contact':
-                contacted_by_id = serializer.validated_data['contacted_by']
-                try:
-                    admin_user = AdminUser.objects.get(id=contacted_by_id)
-                    updated_count = leads.update(contacted_by=admin_user)
-                except AdminUser.DoesNotExist:
+                new_status = request.data.get('status')
+                if not new_status:
                     return error_response(
-                        message='Admin user not found',
-                        status_code=status.HTTP_404_NOT_FOUND
+                        errors={'status': 'Status is required for change_status action'},
+                        message="Status is required"
                     )
-
-            return success_response(
-                data={
-                    'action': action,
-                    'updated_count': updated_count,
-                    'lead_ids': lead_ids,
-                },
-                message=f'Bulk action "{action}" completed successfully on {updated_count} leads'
-            )
-
+                
+                valid_statuses = ['new', 'contacted', 'qualified', 'closed']
+                if new_status not in valid_statuses:
+                    return error_response(
+                        errors={'status': f'Invalid status. Must be one of: {", ".join(valid_statuses)}'},
+                        message="Invalid status"
+                    )
+                
+                from django.utils import timezone
+                count = 0
+                for lead in leads:
+                    if new_status == 'contacted' and lead.status != 'contacted':
+                        lead.contacted_at = timezone.now()
+                        lead.contacted_by = request.user
+                    lead.status = new_status
+                    lead.save()
+                    count += 1
+                
+                return success_response(
+                    data={'count': count},
+                    message=f"{count} lead(s) status updated successfully"
+                )
+            
+            else:
+                return error_response(
+                    errors={'action': f'Invalid action. Must be one of: delete, restore, change_status'},
+                    message="Invalid action"
+                )
+        
         except Exception as e:
             return error_response(
-                message='Failed to perform bulk action',
-                errors={'error': str(e)},
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+                errors={'detail': str(e)},
+                message="Failed to perform bulk action"
             )
 
 
 class ExportLeadsView(APIView):
-    """GET: Export leads to CSV (admin only)."""
-
-    permission_classes = [IsAdminUser]
-
+    """Export leads to CSV."""
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    
+    @extend_schema(
+        parameters=[
+            OpenApiParameter('status', str, description='Filter by status'),
+            OpenApiParameter('source', str, description='Filter by source'),
+        ],
+        responses={200: OpenApiResponse(description="CSV file download")},
+        description="Export leads to CSV (admin only)"
+    )
     def get(self, request):
-        """Export leads to CSV file."""
+        """Export leads to CSV."""
         try:
-            # Get all leads (apply same filters as list view if needed)
+            queryset = Lead.objects.all()
+            
+            # Apply filters
             status_filter = request.query_params.get('status')
-            priority = request.query_params.get('priority')
-            source = request.query_params.get('source')
-
-            queryset = Lead.objects.select_related('project', 'contacted_by').all()
-
             if status_filter:
                 queryset = queryset.filter(status=status_filter)
-            if priority:
-                queryset = queryset.filter(priority=priority)
-            if source:
-                queryset = queryset.filter(source=source)
-
-            # Create CSV response
+            
+            source_filter = request.query_params.get('source')
+            if source_filter:
+                queryset = queryset.filter(source=source_filter)
+            
+            queryset = queryset.select_related('project').order_by('-created_at')
+            
             response = HttpResponse(content_type='text/csv')
-            response['Content-Disposition'] = f'attachment; filename="leads_{timezone.now().strftime("%Y%m%d_%H%M%S")}.csv"'
-
+            response['Content-Disposition'] = 'attachment; filename="leads_export.csv"'
+            
             writer = csv.writer(response)
-
-            # Write header
             writer.writerow([
-                'ID',
-                'Name',
-                'Email',
-                'Phone',
-                'Project',
-                'Message',
-                'Status',
-                'Priority',
-                'Source',
-                'Preferred Contact',
-                'Next Follow-up',
-                'Follow-up Count',
-                'Contacted At',
-                'Contacted By',
-                'Notes',
-                'Created At',
+                'ID', 'Name', 'Email', 'Phone', 'Project', 'Message', 
+                'Source', 'Status', 'Contacted At', 'Notes', 'Created At'
             ])
-
-            # Write data
+            
             for lead in queryset:
                 writer.writerow([
                     lead.id,
@@ -643,23 +510,51 @@ class ExportLeadsView(APIView):
                     lead.phone,
                     lead.project.title if lead.project else '',
                     lead.message,
-                    lead.status,
-                    lead.priority,
-                    lead.source,
-                    lead.preferred_contact_method,
-                    lead.next_follow_up.strftime('%Y-%m-%d %H:%M') if lead.next_follow_up else '',
-                    lead.follow_up_count,
-                    lead.contacted_at.strftime('%Y-%m-%d %H:%M') if lead.contacted_at else '',
-                    lead.contacted_by.full_name if lead.contacted_by else '',
-                    lead.notes.replace('\n', ' | '),
-                    lead.created_at.strftime('%Y-%m-%d %H:%M'),
+                    lead.get_source_display(),
+                    lead.get_status_display(),
+                    lead.contacted_at.strftime('%Y-%m-%d %H:%M:%S') if lead.contacted_at else '',
+                    lead.notes,
+                    lead.created_at.strftime('%Y-%m-%d %H:%M:%S')
                 ])
-
+            
             return response
-
+        
         except Exception as e:
             return error_response(
-                message='Failed to export leads',
-                errors={'error': str(e)},
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+                errors={'detail': str(e)},
+                message="Failed to export leads"
             )
+
+
+class LeadsStatisticsView(APIView):
+    """Get leads statistics."""
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    
+    @extend_schema(
+        responses={200: OpenApiResponse(description="Leads statistics")},
+        description="Get leads statistics (admin only)"
+    )
+    def get(self, request):
+        """Get leads statistics."""
+        try:
+            queryset = Lead.objects.filter(is_deleted=False)
+            
+            statistics = {
+                'total_leads': queryset.count(),
+                'new_leads': queryset.filter(status='new').count(),
+                'contacted_leads': queryset.filter(status='contacted').count(),
+                'qualified_leads': queryset.filter(status='qualified').count(),
+                'closed_leads': queryset.filter(status='closed').count(),
+            }
+            
+            return success_response(
+                data=statistics,
+                message="Leads statistics retrieved successfully"
+            )
+        
+        except Exception as e:
+            return error_response(
+                errors={'detail': str(e)},
+                message="Failed to retrieve leads statistics"
+            )
+

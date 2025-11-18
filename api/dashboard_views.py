@@ -3,7 +3,7 @@ from rest_framework.permissions import IsAuthenticated
 from django.db.models import Count, Q
 from django.utils import timezone
 from datetime import timedelta
-from drf_spectacular.utils import extend_schema, OpenApiResponse
+from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiExample, OpenApiParameter
 
 from .models import Project, Lead, Testimonial, SystemStatus
 from .dashboard_serializers import (
@@ -26,8 +26,33 @@ class DashboardOverviewView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     @extend_schema(
-        responses={200: DashboardOverviewSerializer},
-        description="Get complete dashboard overview with statistics and recent activity"
+        responses={
+            200: OpenApiResponse(description='Dashboard overview retrieved successfully - Returns complete dashboard data including statistics, recent leads, system status, and analytics breakdowns in a single optimized call.'),
+            401: OpenApiResponse(description='Unauthorized - Invalid or expired token.'),
+            403: OpenApiResponse(description='Forbidden - Admin access required.'),
+        },
+        description='''
+        **Complete Dashboard Overview**
+        
+        Get all dashboard data in a single API call. This is the main endpoint for the admin dashboard page.
+        
+        **Response includes:**
+        - **Statistics**: Total projects (upcoming, ongoing, completed), total leads (new, contacted, qualified, closed)
+        - **Recent Leads**: Last 3 leads with project information
+        - **System Status**: Current system operational status
+        - **Analytics**: Project breakdown by status, lead breakdown by status with percentages
+        
+        **Use Cases:**
+        - Load admin dashboard page
+        - Display key metrics and statistics
+        - Show recent activity
+        - Display system health
+        
+        **Performance:** This endpoint is optimized to fetch all dashboard data in one call, reducing the number of API requests needed.
+        
+        **Authentication Required:** Yes (Admin only)
+        ''',
+        tags=['Dashboard']
     )
     def get(self, request):
         try:
@@ -111,8 +136,35 @@ class DashboardStatsView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     @extend_schema(
-        responses={200: DashboardStatsSerializer},
-        description="Get dashboard statistics only"
+        responses={
+            200: OpenApiResponse(description='Dashboard statistics retrieved successfully - Returns key metrics including project counts by status and lead counts by status.'),
+            401: OpenApiResponse(description='Unauthorized - Invalid or expired token.'),
+            403: OpenApiResponse(description='Forbidden - Admin access required.'),
+        },
+        description='''
+        **Dashboard Statistics**
+        
+        Get dashboard statistics only (for quick refresh without full dashboard data).
+        
+        **Response includes:**
+        - `total_projects`: Total number of active projects
+        - `upcoming_projects`: Number of upcoming projects
+        - `ongoing_projects`: Number of ongoing projects
+        - `completed_projects`: Number of completed projects
+        - `total_leads`: Total number of active leads
+        - `new_leads`: Number of new leads
+        - `contacted_leads`: Number of contacted leads
+        - `qualified_leads`: Number of qualified leads
+        - `closed_leads`: Number of closed leads
+        
+        **Use Cases:**
+        - Quick statistics refresh on dashboard
+        - Display summary cards
+        - Update metrics without loading full dashboard
+        
+        **Authentication Required:** Yes (Admin only)
+        ''',
+        tags=['Dashboard']
     )
     def get(self, request):
         try:
@@ -145,8 +197,38 @@ class RecentLeadsView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     @extend_schema(
-        responses={200: RecentLeadSerializer(many=True)},
-        description="Get recent leads (default: 10, max: 50)"
+        parameters=[
+            OpenApiParameter('limit', int, description='Number of recent leads to return (default: 10, max: 50)', required=False),
+        ],
+        responses={
+            200: OpenApiResponse(description='Recent leads retrieved successfully - Returns most recent leads with project information, ordered by creation date (newest first).'),
+            401: OpenApiResponse(description='Unauthorized - Invalid or expired token.'),
+            403: OpenApiResponse(description='Forbidden - Admin access required.'),
+        },
+        description='''
+        **Recent Leads**
+        
+        Get recent leads for dashboard display.
+        
+        **Query Parameters:**
+        - `limit` (optional): Number of leads to return (default: 10, maximum: 50)
+        
+        **Example:** `/api/dashboard/recent-leads/?limit=20`
+        
+        **Response includes:**
+        - Lead ID, name, email, phone
+        - Associated project information (if any)
+        - Lead status and source
+        - Time ago (human-readable relative time)
+        
+        **Use Cases:**
+        - Display recent activity on dashboard
+        - Show latest lead submissions
+        - Quick access to new inquiries
+        
+        **Authentication Required:** Yes (Admin only)
+        ''',
+        tags=['Dashboard']
     )
     def get(self, request):
         try:

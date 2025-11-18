@@ -4,21 +4,36 @@ from django.conf import settings
 from django.conf.urls.static import static
 from pathlib import Path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
+from rest_framework.permissions import IsAuthenticated
 from api.views import DevIndexView
+
+# API Documentation views - restrict to authenticated users in production
+if settings.DEBUG:
+    # In development, allow public access
+    schema_view = SpectacularAPIView.as_view()
+    swagger_view = SpectacularSwaggerView.as_view(url_name='schema')
+    redoc_view = SpectacularRedocView.as_view(url_name='schema')
+else:
+    # In production, require authentication
+    schema_view = SpectacularAPIView.as_view(permission_classes=[IsAuthenticated])
+    swagger_view = SpectacularSwaggerView.as_view(url_name='schema', permission_classes=[IsAuthenticated])
+    redoc_view = SpectacularRedocView.as_view(url_name='schema', permission_classes=[IsAuthenticated])
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    # Root development index — lists API docs and useful endpoints
-    path('', DevIndexView.as_view(), name='dev-index'),
-
+    
     # API endpoints
     path('api/', include('api.urls')),
 
-    # API Documentation
-    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
-    path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
-    path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
+    # API Documentation (public in dev, authenticated in production)
+    path('api/schema/', schema_view, name='schema'),
+    path('api/docs/', swagger_view, name='swagger-ui'),
+    path('api/redoc/', redoc_view, name='redoc'),
 ]
+
+# Root development index - only in DEBUG mode
+if settings.DEBUG:
+    urlpatterns.insert(0, path('', DevIndexView.as_view(), name='dev-index'))
 
 # Serve media files in development
 if settings.DEBUG:
