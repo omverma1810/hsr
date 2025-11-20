@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from datetime import timedelta
 from decouple import config
+import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -66,24 +67,20 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 # Database
-DB_ENGINE = config('DB_ENGINE', default='django.db.backends.sqlite3')
-
-if DB_ENGINE == 'django.db.backends.postgresql':
+# Database
+DATABASE_URL = config('DATABASE_URL', default=None)
+if DATABASE_URL:
     DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': config('DB_NAME', default='hsr_green_homes'),
-            'USER': config('DB_USER', default='postgres'),
-            'PASSWORD': config('DB_PASSWORD', default=''),
-            'HOST': config('DB_HOST', default='localhost'),
-            'PORT': config('DB_PORT', default='5432'),
-        }
+        'default': dj_database_url.parse(
+            DATABASE_URL,
+            conn_max_age=config('DB_CONN_MAX_AGE', default=600, cast=int),
+            ssl_require=config('DB_SSL_REQUIRE', default=False, cast=bool),
+        )
     }
 else:
-    # Default to SQLite
     DATABASES = {
         'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
+            'ENGINE': config('DB_ENGINE', default='django.db.backends.sqlite3'),
             'NAME': BASE_DIR / config('DB_NAME', default='db.sqlite3'),
         }
     }
