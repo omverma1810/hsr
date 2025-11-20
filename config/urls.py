@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from pathlib import Path
+from django.views.generic import RedirectView
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 from rest_framework.permissions import IsAuthenticated
 from api.views import DevIndexView
@@ -34,6 +34,8 @@ urlpatterns = [
 # Root development index - only in DEBUG mode
 if settings.DEBUG:
     urlpatterns.insert(0, path('', DevIndexView.as_view(), name='dev-index'))
+else:
+    urlpatterns.insert(0, path('', RedirectView.as_view(pattern_name='swagger-ui', permanent=False), name='root-redirect'))
 
 # Serve media files in development
 if settings.DEBUG:
