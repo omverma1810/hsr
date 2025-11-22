@@ -4,7 +4,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import RedirectView
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from api.views import DevIndexView
 
 # API Documentation views - restrict to authenticated users in production
@@ -14,10 +14,10 @@ if settings.DEBUG:
     swagger_view = SpectacularSwaggerView.as_view(url_name='schema')
     redoc_view = SpectacularRedocView.as_view(url_name='schema')
 else:
-    # In production, require authentication
-    schema_view = SpectacularAPIView.as_view(permission_classes=[IsAuthenticated])
-    swagger_view = SpectacularSwaggerView.as_view(url_name='schema', permission_classes=[IsAuthenticated])
-    redoc_view = SpectacularRedocView.as_view(url_name='schema', permission_classes=[IsAuthenticated])
+    # In production, allow public access to docs (optional, but good for testing)
+    schema_view = SpectacularAPIView.as_view(permission_classes=[AllowAny])
+    swagger_view = SpectacularSwaggerView.as_view(url_name='schema', permission_classes=[AllowAny])
+    redoc_view = SpectacularRedocView.as_view(url_name='schema', permission_classes=[AllowAny])
 
 urlpatterns = [
     path('admin/', admin.site.urls),
