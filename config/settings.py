@@ -30,6 +30,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'drf_spectacular',
     'django_filters',
+    'cloudinary_storage',
+    'cloudinary',
 
     # Local apps
     'api',
@@ -109,6 +111,18 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 # Media files
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# Cloudinary Configuration
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME', default=''),
+    'API_KEY': config('CLOUDINARY_API_KEY', default=''),
+    'API_SECRET': config('CLOUDINARY_API_SECRET', default=''),
+}
+
+# Only use Cloudinary if credentials are provided
+if config('CLOUDINARY_CLOUD_NAME', default=None):
+    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+    MEDIA_URL = '/hsr-media/'  # Cloudinary handles the actual URL generation
 
 # Base URL for constructing absolute URLs (used in serializers and models)
 # Set this in .env file, e.g., BASE_URL=http://localhost:8000 or BASE_URL=https://yourdomain.com

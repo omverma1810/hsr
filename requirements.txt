@@ -10,3 +10,5 @@ django-filter==24.2
 setuptools==70.3.0
 dj-database-url==2.2.0
 gunicorn>=21.2.0
+django-cloudinary-storage>=0.3.0
+cloudinary>=1.36.0
