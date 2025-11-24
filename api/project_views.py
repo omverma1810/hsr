@@ -447,9 +447,37 @@ class ProjectGalleryImageDetailView(APIView):
         description="Delete gallery image"
     )
     def delete(self, request, pk, image_id):
-        """Delete gallery image."""
+        """Delete gallery image from Cloudinary and database."""
         try:
             image = ProjectGalleryImage.objects.get(pk=image_id, project_id=pk)
+            
+            # Delete from Cloudinary if using Cloudinary storage
+            if image.image_file:
+                try:
+                    import cloudinary.uploader
+                    from django.conf import settings
+                    
+                    # Check if we're using Cloudinary
+                    if hasattr(settings, 'DEFAULT_FILE_STORAGE') and 'cloudinary' in settings.DEFAULT_FILE_STORAGE.lower():
+                        # Extract public_id from the file name
+                        public_id = image.image_file.name
+                        if public_id:
+                            # For Cloudinary, remove file extension
+                            if '.' in public_id:
+                                public_id = public_id.rsplit('.', 1)[0]
+                            
+                            # Delete from Cloudinary
+                            result = cloudinary.uploader.destroy(public_id)
+                            import logging
+                            logger = logging.getLogger(__name__)
+                            logger.info(f"Cloudinary deletion result for gallery image {public_id}: {result}")
+                except Exception as e:
+                    # Log the error but continue with database deletion
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.warning(f"Failed to delete gallery image from Cloudinary: {str(e)}")
+            
+            # Soft delete
             image.soft_delete()
 
             return success_response(
@@ -565,9 +593,37 @@ class ProjectFloorPlanDetailView(APIView):
         description="Delete floor plan"
     )
     def delete(self, request, pk, plan_id):
-        """Delete floor plan."""
+        """Delete floor plan from Cloudinary and database."""
         try:
             floor_plan = ProjectFloorPlan.objects.get(pk=plan_id, project_id=pk)
+            
+            # Delete from Cloudinary if using Cloudinary storage
+            if floor_plan.file:
+                try:
+                    import cloudinary.uploader
+                    from django.conf import settings
+                    
+                    # Check if we're using Cloudinary
+                    if hasattr(settings, 'DEFAULT_FILE_STORAGE') and 'cloudinary' in settings.DEFAULT_FILE_STORAGE.lower():
+                        # Extract public_id from the file name
+                        public_id = floor_plan.file.name
+                        if public_id:
+                            # For Cloudinary, remove file extension
+                            if '.' in public_id:
+                                public_id = public_id.rsplit('.', 1)[0]
+                            
+                            # Delete from Cloudinary
+                            result = cloudinary.uploader.destroy(public_id)
+                            import logging
+                            logger = logging.getLogger(__name__)
+                            logger.info(f"Cloudinary deletion result for floor plan {public_id}: {result}")
+                except Exception as e:
+                    # Log the error but continue with database deletion
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.warning(f"Failed to delete floor plan from Cloudinary: {str(e)}")
+            
+            # Soft delete
             floor_plan.soft_delete()
 
             return success_response(

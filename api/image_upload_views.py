@@ -210,10 +210,40 @@ class UploadedImageDetailView(APIView):
         description='Delete an uploaded image'
     )
     def delete(self, request, pk):
-        """Delete an image."""
+        """Delete an image from both Cloudinary and database."""
         try:
             image = UploadedImage.objects.get(pk=pk)
+            
+            # Delete from Cloudinary if using Cloudinary storage
+            if image.image_file:
+                try:
+                    import cloudinary.uploader
+                    from django.conf import settings
+                    
+                    # Check if we're using Cloudinary
+                    if hasattr(settings, 'DEFAULT_FILE_STORAGE') and 'cloudinary' in settings.DEFAULT_FILE_STORAGE.lower():
+                        # Extract public_id from the file name
+                        # Cloudinary file name is typically like: uploads/uuid.ext
+                        public_id = image.image_file.name
+                        if public_id:
+                            # For Cloudinary, remove file extension
+                            if '.' in public_id:
+                                public_id = public_id.rsplit('.', 1)[0]
+                            
+                            # Delete from Cloudinary
+                            result = cloudinary.uploader.destroy(public_id)
+                            import logging
+                            logger = logging.getLogger(__name__)
+                            logger.info(f"Cloudinary deletion result for {public_id}: {result}")
+                except Exception as e:
+                    # Log the error but continue with database deletion
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.warning(f"Failed to delete image from Cloudinary: {str(e)}")
+            
+            # Delete from database
             image.delete()
+            
             return success_response(
                 message='Image deleted successfully'
             )

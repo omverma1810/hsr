@@ -849,15 +849,22 @@ class UploadedImage(TimeStampedModel):
         return f"{self.title or 'Untitled'} - {self.image_file.name if self.image_file else 'No file'}"
     
     def get_image_url(self, request=None):
-        """Generate public URL for the image."""
+        """Generate public URL for the image (handles Cloudinary and local storage)."""
         try:
             if hasattr(self, 'image_file') and self.image_file:
+                file_url = self.image_file.url
+                
+                # Return as-is if already absolute (Cloudinary URLs)
+                if file_url.startswith('http://') or file_url.startswith('https://'):
+                    return file_url
+                
+                # Build absolute URL for relative paths (local media)
                 if request:
-                    return request.build_absolute_uri(self.image_file.url)
+                    return request.build_absolute_uri(file_url)
                 # Fallback: construct URL manually
                 from django.conf import settings
                 base_url = getattr(settings, 'BASE_URL', 'http://localhost:8000')
-                return f"{base_url}{self.image_file.url}"
+                return f"{base_url}{file_url}"
         except (AttributeError, ValueError):
             pass
         # Return stored URL if available

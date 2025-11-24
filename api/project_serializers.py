@@ -20,6 +20,12 @@ class ProjectGalleryImageSerializer(serializers.ModelSerializer):
     def get_image(self, obj):
         """Return the actual image URL (absolute URL)."""
         image_url = obj.image
+        
+        # Return as-is if already absolute (Cloudinary URLs)
+        if image_url and (image_url.startswith('http://') or image_url.startswith('https://')):
+            return image_url
+        
+        # Only build absolute URI for relative URLs (local media files)
         if image_url and not image_url.startswith('http'):
             request = self.context.get('request')
             if request:
@@ -28,6 +34,7 @@ class ProjectGalleryImageSerializer(serializers.ModelSerializer):
             from django.conf import settings
             base_url = getattr(settings, 'BASE_URL', 'http://localhost:8000')
             return f"{base_url}{image_url}"
+        
         return image_url
 
 
@@ -44,6 +51,12 @@ class ProjectFloorPlanSerializer(serializers.ModelSerializer):
     def get_file_path(self, obj):
         """Return the actual file URL (absolute URL)."""
         file_url = obj.file_path
+        
+        # Return as-is if already absolute (Cloudinary URLs)
+        if file_url and (file_url.startswith('http://') or file_url.startswith('https://')):
+            return file_url
+        
+        # Only build absolute URI for relative URLs (local media files)
         if file_url and not file_url.startswith('http'):
             request = self.context.get('request')
             if request:
@@ -52,6 +65,7 @@ class ProjectFloorPlanSerializer(serializers.ModelSerializer):
             from django.conf import settings
             base_url = getattr(settings, 'BASE_URL', 'http://localhost:8000')
             return f"{base_url}{file_url}"
+        
         return file_url
 
 
@@ -79,6 +93,12 @@ class ProjectListSerializer(serializers.ModelSerializer):
     def get_hero_image(self, obj):
         """Return hero image URL (absolute URL)."""
         hero_image_url = obj.hero_image
+        
+        # Return as-is if already absolute (Cloudinary URLs)
+        if hero_image_url and (hero_image_url.startswith('http://') or hero_image_url.startswith('https://')):
+            return hero_image_url
+        
+        # Only build absolute URI for relative URLs (local media files)
         if hero_image_url and not hero_image_url.startswith('http'):
             request = self.context.get('request')
             if request:
@@ -87,11 +107,18 @@ class ProjectListSerializer(serializers.ModelSerializer):
             from django.conf import settings
             base_url = getattr(settings, 'BASE_URL', 'http://localhost:8000')
             return f"{base_url}{hero_image_url}"
+        
         return hero_image_url
 
     def get_hero_image_url(self, obj):
         """Return hero_image_url for frontend compatibility (absolute URL)."""
         hero_url = obj.hero_image_url or (obj.hero_image_file.url if obj.hero_image_file else None)
+        
+        # Return as-is if already absolute (Cloudinary URLs)
+        if hero_url and (hero_url.startswith('http://') or hero_url.startswith('https://')):
+            return hero_url
+        
+        # Only build absolute URI for relative URLs (local media files)
         if hero_url and not hero_url.startswith('http'):
             request = self.context.get('request')
             if request:
@@ -100,6 +127,7 @@ class ProjectListSerializer(serializers.ModelSerializer):
             from django.conf import settings
             base_url = getattr(settings, 'BASE_URL', 'http://localhost:8000')
             return f"{base_url}{hero_url}"
+        
         return hero_url
 
     def get_configurations(self, obj):
@@ -155,6 +183,12 @@ class ProjectDetailSerializer(serializers.ModelSerializer):
     def get_hero_image(self, obj):
         """Return hero image URL (absolute URL)."""
         hero_image_url = obj.hero_image
+        
+        # Return as-is if already absolute (Cloudinary URLs)
+        if hero_image_url and (hero_image_url.startswith('http://') or hero_image_url.startswith('https://')):
+            return hero_image_url
+        
+        # Only build absolute URI for relative URLs (local media files)
         if hero_image_url and not hero_image_url.startswith('http'):
             request = self.context.get('request')
             if request:
@@ -163,11 +197,18 @@ class ProjectDetailSerializer(serializers.ModelSerializer):
             from django.conf import settings
             base_url = getattr(settings, 'BASE_URL', 'http://localhost:8000')
             return f"{base_url}{hero_image_url}"
+        
         return hero_image_url
 
     def get_hero_image_url(self, obj):
         """Return hero_image_url for frontend compatibility (absolute URL)."""
         hero_url = obj.hero_image_url or (obj.hero_image_file.url if obj.hero_image_file else None)
+        
+        # Return as-is if already absolute (Cloudinary URLs)
+        if hero_url and (hero_url.startswith('http://') or hero_url.startswith('https://')):
+            return hero_url
+        
+        # Only build absolute URI for relative URLs (local media files)  
         if hero_url and not hero_url.startswith('http'):
             request = self.context.get('request')
             if request:
@@ -176,11 +217,18 @@ class ProjectDetailSerializer(serializers.ModelSerializer):
             from django.conf import settings
             base_url = getattr(settings, 'BASE_URL', 'http://localhost:8000')
             return f"{base_url}{hero_url}"
+        
         return hero_url
 
     def get_brochure(self, obj):
         """Return brochure URL (absolute URL)."""
         brochure_url = obj.brochure
+        
+        # Return as-is if already absolute (Cloudinary URLs)
+        if brochure_url and (brochure_url.startswith('http://') or brochure_url.startswith('https://')):
+            return brochure_url
+        
+        # Only build absolute URI for relative URLs (local media files)
         if brochure_url and not brochure_url.startswith('http'):
             request = self.context.get('request')
             if request:
@@ -189,6 +237,7 @@ class ProjectDetailSerializer(serializers.ModelSerializer):
             from django.conf import settings
             base_url = getattr(settings, 'BASE_URL', 'http://localhost:8000')
             return f"{base_url}{brochure_url}"
+        
         return brochure_url
 
     def get_configurations(self, obj):

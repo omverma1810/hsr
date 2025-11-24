@@ -13,18 +13,24 @@ class UploadedImageSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'image_url', 'uploaded_by', 'created_at', 'updated_at']
     
     def get_image_url(self, obj):
-        """Return the public URL for the image."""
+        """Return the public URL for the image (handles Cloudinary and local storage)."""
         try:
             request = self.context.get('request')
             url = obj.get_image_url(request=request)
-            # If image_url field is not set, set it now
-            if url and not obj.image_url:
-                try:
-                    obj.image_url = url
-                    obj.save(update_fields=['image_url'])
-                except Exception:
-                    # If save fails, just return the URL
-                    pass
+            
+            # Return as-is if already absolute (Cloudinary URLs start with http/https)
+            if url and (url.startswith('http://') or url.startswith('https://')):
+                return url
+            
+            # Only build absolute URI for relative URLs (local media files)
+            if url and not url.startswith('http'):
+                if request:
+                    return request.build_absolute_uri(url)
+                # Fallback: construct URL from settings
+                from django.conf import settings
+                base_url = getattr(settings, 'BASE_URL', 'http://localhost:8000')
+                return f"{base_url}{url}"
+            
             return url or obj.image_url or ''
         except Exception:
             # Fallback to stored image_url if available
@@ -58,12 +64,19 @@ class ImageUploadSerializer(serializers.Serializer):
         uploaded_image.save()
         
         # Generate and save the public URL
-        if request:
-            uploaded_image.image_url = request.build_absolute_uri(uploaded_image.image_file.url)
+        file_url = uploaded_image.image_file.url
+        
+        # Check if URL is already absolute (Cloudinary)
+        if file_url.startswith('http://') or file_url.startswith('https://'):
+            uploaded_image.image_url = file_url
         else:
-            from django.conf import settings
-            base_url = getattr(settings, 'BASE_URL', 'http://localhost:8000')
-            uploaded_image.image_url = f"{base_url}{uploaded_image.image_file.url}"
+            # Build absolute URL for relative paths (local media)
+            if request:
+                uploaded_image.image_url = request.build_absolute_uri(file_url)
+            else:
+                from django.conf import settings
+                base_url = getattr(settings, 'BASE_URL', 'http://localhost:8000')
+                uploaded_image.image_url = f"{base_url}{file_url}"
         
         uploaded_image.save(update_fields=['image_url'])
         
