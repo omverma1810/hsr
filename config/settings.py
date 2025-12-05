@@ -132,10 +132,16 @@ BASE_URL = config('BASE_URL', default='http://localhost:8000')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # CORS Settings
-CORS_ALLOWED_ORIGINS = config(
-    'CORS_ALLOWED_ORIGINS',
-    default='http://localhost:3000,https://hsr-fe.vercel.app'
-).split(',')
+# CORS_ALLOWED_ORIGINS = config(
+#     'CORS_ALLOWED_ORIGINS',
+#     default='http://localhost:3000,https://hsr-fe.vercel.app'
+# ).split(',')
+CORS_ALLOWED_ORIGINS = [
+    "https://hsrgreenhomes.com",
+    "https://www.hsrgreenhomes.com",
+    "https://hsr-fe.vercel.app",
+    "http://localhost:3000",
+]
 CORS_ALLOW_CREDENTIALS = True
 
 # REST Framework Configuration
