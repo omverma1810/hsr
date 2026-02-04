@@ -1,4 +1,5 @@
-from django.urls import path
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
 
 # Import existing views
@@ -71,6 +72,11 @@ from .image_upload_views import (
     UploadedImagesListView,
     UploadedImageDetailView
 )
+
+from .about_views import AwardViewSet
+
+router = DefaultRouter()
+router.register(r'about/awards', AwardViewSet, basename='awards')
 
 urlpatterns = [
     # Authentication endpoints (Phase 1)
@@ -153,4 +159,7 @@ urlpatterns = [
     path('images/upload/', ImageUploadView.as_view(), name='image_upload'),
     path('images/', UploadedImagesListView.as_view(), name='uploaded_images_list'),
     path('images/<int:pk>/', UploadedImageDetailView.as_view(), name='uploaded_image_detail'),
+
+    # Awards and Router
+    path('', include(router.urls)),
 ]

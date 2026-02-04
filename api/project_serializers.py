@@ -87,7 +87,8 @@ class ProjectListSerializer(serializers.ModelSerializer):
             'hero_image', 'hero_image_url', 'is_featured', 
             'configurations', 'configurations_list', 
             'amenities', 'amenities_list',
-            'view_count', 'created_by_name', 'created_at', 'updated_at'
+            'view_count', 'created_by_name', 'created_at', 'updated_at',
+            'google_map_embed_url'
         ]
 
     def get_hero_image(self, obj):
@@ -174,9 +175,11 @@ class ProjectDetailSerializer(serializers.ModelSerializer):
             'amenities', 'amenities_list',
             'is_featured', 'view_count',
             'gallery_images', 'floor_plans',
+            'gallery_images', 'floor_plans',
             'created_by', 'created_by_name', 'updated_by', 'updated_by_name',
             'leads_count', 'testimonials_count',
-            'created_at', 'updated_at'
+            'created_at', 'updated_at',
+            'google_map_embed_url'
         ]
         read_only_fields = ['id', 'slug', 'view_count', 'created_at', 'updated_at']
 
@@ -284,11 +287,15 @@ class ProjectCreateUpdateSerializer(serializers.ModelSerializer):
             'brochure_url', 'brochure_file',
             'configurations', 'configurations_list',
             'amenities', 'amenities_list',
-            'is_featured'
+            'is_featured',
+            'google_map_embed_url'
         ]
 
     def validate_rera_number(self, value):
         """Validate RERA number uniqueness."""
+        if not value:
+            return value
+            
         instance = self.instance
         if instance:
             # Update scenario
@@ -308,13 +315,7 @@ class ProjectCreateUpdateSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(f"Invalid configuration: {config}")
         return value
 
-    def validate_amenities_list(self, value):
-        """Validate amenities list."""
-        valid_amenities = [amenity[0] for amenity in PROJECT_AMENITIES]
-        for amenity in value:
-            if amenity not in valid_amenities:
-                raise serializers.ValidationError(f"Invalid amenity: {amenity}")
-        return value
+
 
     def validate(self, data):
         """Additional validation."""

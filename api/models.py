@@ -134,6 +134,13 @@ def project_brochure_path(instance, filename):
     return os.path.join('projects', str(instance.id), 'brochure', filename)
 
 
+def award_image_path(instance, filename):
+    """Generate path for award images."""
+    ext = filename.split('.')[-1]
+    filename = f"{uuid.uuid4()}.{ext}"
+    return os.path.join('awards', filename)
+
+
 class Project(TimeStampedModel, SoftDeleteModel):
     """Enhanced Project model with complete fields for real estate projects."""
 
@@ -144,21 +151,29 @@ class Project(TimeStampedModel, SoftDeleteModel):
     ]
 
     # Basic Information
+    # Basic Information
     title = models.CharField(max_length=255, db_index=True)
     slug = models.SlugField(max_length=300, unique=True, blank=True)
     location = models.CharField(max_length=255, db_index=True)
     rera_number = models.CharField(
         max_length=100,
         unique=True,
+        null=True,
+        blank=True,
         db_index=True,
         help_text='Unique RERA registration number'
     )
-    description = models.TextField(help_text='Detailed project description')
+    description = models.TextField(help_text='Detailed project description', null=True, blank=True)
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
         default='upcoming',
         db_index=True
+    )
+    google_map_embed_url = models.TextField(
+        blank=True,
+        null=True,
+        help_text='Google Map Embed Code or URL'
     )
 
     # Media Fields
@@ -516,12 +531,9 @@ class HomePageContent(TimeStampedModel):
     @classmethod
     def get_current(cls):
         """Get or create the single home page content instance."""
-        # Try to get existing record first
-        try:
-            return cls.objects.first()
-        except cls.DoesNotExist:
-            pass
-        # Create new instance if none exists
+        obj = cls.objects.first()
+        if obj:
+            return obj
         return cls.objects.create()
 
 
@@ -780,6 +792,7 @@ PROJECT_CONFIGURATIONS = [
     ('4bhk', '4BHK'),
     ('villa', 'Villa'),
     ('duplex', 'Duplex'),
+    ('apartment', 'Apartment'),
 ]
 
 PROJECT_AMENITIES = [
@@ -794,6 +807,33 @@ PROJECT_AMENITIES = [
     ('garden', 'Garden'),
     ('community_hall', 'Community Hall'),
 ]
+
+
+
+class Award(TimeStampedModel):
+    """Model for Awards and Recognition."""
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True)
+    image_url = models.URLField(blank=True, null=True)
+    image_file = models.ImageField(upload_to=award_image_path, blank=True, null=True)
+    display_order = models.IntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = 'about_awards'
+        verbose_name = 'Award'
+        verbose_name_plural = 'Awards'
+        ordering = ['display_order', '-created_at']
+
+    def __str__(self):
+        return self.title
+
+    @property
+    def image(self):
+        """Return image URL (file upload takes precedence)."""
+        if self.image_file:
+            return self.image_file.url
+        return self.image_url
 
 
 def uploaded_image_path(instance, filename):

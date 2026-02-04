@@ -100,6 +100,11 @@ class ProjectsListView(APIView):
                     Q(description__icontains=search)
                 )
 
+            # Filter by slug (for direct linking)
+            slug = request.query_params.get('slug')
+            if slug:
+                queryset = queryset.filter(slug=slug)
+
             # Sorting
             sort_by = request.query_params.get('sort_by', 'created_at')
             sort_order = request.query_params.get('sort_order', 'desc')

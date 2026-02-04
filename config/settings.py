@@ -141,8 +141,24 @@ CORS_ALLOWED_ORIGINS = [
     "https://www.hsrgreenhomes.com",
     "https://hsr-fe.vercel.app",
     "http://localhost:3000",
+    "http://127.0.0.1:3000",
 ]
 CORS_ALLOW_CREDENTIALS = True
+
+# --- Local vs Production Logging ---
+if DEBUG:
+    print(f"\n{'='*40}")
+    print(f"🚀 RUNNING IN LOCAL DEVELOPMENT MODE")
+    print(f"✅ DEBUG: {DEBUG}")
+    print(f"✅ Database: {DATABASES['default']['NAME'] if 'sqlite3' in str(DATABASES['default']['ENGINE']) else 'PostgreSQL'}")
+    print(f"✅ HSTS/SSL: Disabled")
+    print(f"{'='*40}\n")
+else:
+    print(f"\n{'='*40}")
+    print(f"⚠️  RUNNING IN PRODUCTION MODE")
+    print(f"✅ DEBUG: {DEBUG}")
+    print(f"{'='*40}\n")
+# -----------------------------------
 
 # REST Framework Configuration
 REST_FRAMEWORK = {
