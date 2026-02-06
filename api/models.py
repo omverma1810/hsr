@@ -259,6 +259,10 @@ class Project(TimeStampedModel, SoftDeleteModel):
 
     def save(self, *args, **kwargs):
         """Auto-generate slug from title if not provided."""
+        # Convert empty rera_number to None to avoid unique constraint issues
+        if self.rera_number == '':
+            self.rera_number = None
+
         if not self.slug:
             self.slug = slugify(self.title)
             # Ensure unique slug
