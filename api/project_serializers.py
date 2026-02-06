@@ -294,7 +294,7 @@ class ProjectCreateUpdateSerializer(serializers.ModelSerializer):
     def validate_rera_number(self, value):
         """Validate RERA number uniqueness."""
         if not value:
-            return value
+            return None
             
         instance = self.instance
         if instance:
