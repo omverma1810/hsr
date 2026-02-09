@@ -87,7 +87,8 @@ class ProjectListSerializer(serializers.ModelSerializer):
             'hero_image', 'hero_image_url', 'is_featured', 
             'configurations', 'configurations_list', 
             'amenities', 'amenities_list',
-            'view_count', 'created_by_name', 'created_at', 'updated_at',
+            'view_count', 'display_order',
+            'created_by_name', 'created_at', 'updated_at',
             'google_map_embed_url'
         ]
 
@@ -173,7 +174,7 @@ class ProjectDetailSerializer(serializers.ModelSerializer):
             'brochure_url', 'brochure_file', 'brochure',
             'configurations', 'configurations_list',
             'amenities', 'amenities_list',
-            'is_featured', 'view_count',
+            'is_featured', 'view_count', 'display_order',
             'gallery_images', 'floor_plans',
             'gallery_images', 'floor_plans',
             'created_by', 'created_by_name', 'updated_by', 'updated_by_name',
@@ -282,7 +283,7 @@ class ProjectCreateUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
         fields = [
-            'title', 'location', 'rera_number', 'description', 'status',
+            'title', 'location', 'rera_number', 'description', 'status', 'display_order',
             'hero_image_url', 'hero_image_file',
             'brochure_url', 'brochure_file',
             'configurations', 'configurations_list',
@@ -480,3 +481,9 @@ class BulkActionSerializer(serializers.Serializer):
                 'status': 'Status is required when action is change_status.'
             })
         return data
+
+
+class ProjectReorderSerializer(serializers.Serializer):
+    """Serializer for reordering projects."""
+    id = serializers.IntegerField()
+    display_order = serializers.IntegerField()

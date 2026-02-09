@@ -19,7 +19,8 @@ from .project_serializers import (
     AddFloorPlanSerializer,
     ProjectConfigurationsSerializer,
     ProjectAmenitiesSerializer,
-    BulkActionSerializer
+    BulkActionSerializer,
+    ProjectReorderSerializer
 )
 from .utils import success_response, error_response
 from .permissions import IsAdminUser
@@ -106,12 +107,12 @@ class ProjectsListView(APIView):
                 queryset = queryset.filter(slug=slug)
 
             # Sorting
-            sort_by = request.query_params.get('sort_by', 'created_at')
-            sort_order = request.query_params.get('sort_order', 'desc')
+            sort_by = request.query_params.get('sort_by', 'display_order')
+            sort_order = request.query_params.get('sort_order', 'asc')
 
-            valid_sort_fields = ['created_at', 'updated_at', 'title', 'status', 'view_count']
+            valid_sort_fields = ['created_at', 'updated_at', 'title', 'status', 'view_count', 'display_order']
             if sort_by not in valid_sort_fields:
-                sort_by = 'created_at'
+                sort_by = 'display_order'
 
             if sort_order == 'asc':
                 queryset = queryset.order_by(sort_by)
@@ -837,6 +838,41 @@ class BulkActionsView(APIView):
             return error_response(
                 errors={'detail': str(e)},
                 message="Bulk action failed"
+            )
+
+
+class BulkReorderView(APIView):
+    """Reorder projects."""
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    @extend_schema(
+        request=ProjectReorderSerializer(many=True),
+        responses={200: OpenApiResponse(description="Projects reordered successfully")},
+        description="Update display order for multiple projects"
+    )
+    def post(self, request):
+        """Reorder projects."""
+        try:
+            serializer = ProjectReorderSerializer(data=request.data, many=True)
+            if not serializer.is_valid():
+                return error_response(
+                    errors=serializer.errors,
+                    message="Invalid data"
+                )
+
+            updates = []
+            for item in serializer.validated_data:
+                updates.append(
+                    Project(id=item['id'], display_order=item['display_order'])
+                )
+
+            Project.objects.bulk_update(updates, ['display_order'])
+
+            return success_response(message="Projects reordered successfully")
+        except Exception as e:
+            return error_response(
+                errors={'detail': str(e)},
+                message="Failed to reorder projects"
             )
 
 

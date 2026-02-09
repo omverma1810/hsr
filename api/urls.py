@@ -38,6 +38,7 @@ from .project_views import (
     ProjectRestoreView,
     ProjectCloneView,
     BulkActionsView,
+    BulkReorderView,
     ExportProjectsView,
     ConfigurationsListView,
     AmenitiesListView
@@ -128,6 +129,7 @@ urlpatterns = [
 
     # Bulk actions
     path('projects/bulk-actions/', BulkActionsView.as_view(), name='project_bulk_actions'),
+    path('projects/reorder/', BulkReorderView.as_view(), name='project_reorder'),
     path('projects/export/', ExportProjectsView.as_view(), name='projects_export'),
 
     # Reference data

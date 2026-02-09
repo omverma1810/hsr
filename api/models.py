@@ -170,6 +170,7 @@ class Project(TimeStampedModel, SoftDeleteModel):
         default='upcoming',
         db_index=True
     )
+    display_order = models.IntegerField(default=0, help_text='Order for custom sorting')
     google_map_embed_url = models.TextField(
         blank=True,
         null=True,
