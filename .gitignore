@@ -9,3 +9,10 @@ db.sqlite3
 .DS_Store
 *.swp
 *.swo
+
+# LaTeX build intermediates
+docs/proposal/*.aux
+docs/proposal/*.toc
+docs/proposal/*.out
+docs/proposal/*.log
+docs/proposal/proposal.pdf

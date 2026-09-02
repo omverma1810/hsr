@@ -1,0 +1,1820 @@
+\documentclass[11pt,a4paper]{article}
+\input{preamble}
+
+\begin{document}
+
+% ============================================================
+%  COVER PAGE
+% ============================================================
+\begin{titlepage}
+\thispagestyle{empty}
+\newgeometry{top=0mm,bottom=0mm,left=0mm,right=0mm}
+
+\begin{tcolorbox}[enhanced,colback=brandnavy,colframe=brandnavy,boxrule=0pt,arc=0pt,
+  outer arc=0pt,left=22mm,right=22mm,top=26mm,bottom=16mm,width=\paperwidth,height=118mm,
+  valign=top]
+  {\color{brandaccent}\rule{34mm}{3pt}}\\[10mm]
+  {\color{white}\sffamily\fontsize{12}{14}\selectfont\bfseries COMMERCIAL PROPOSAL \& STATEMENT OF WORK}\\[3mm]
+  {\color{brandaccent}\sffamily\fontsize{10}{12}\selectfont Confidential --- Prepared for the Client}\\[13mm]
+  {\color{white}\sffamily\fontsize{31}{37}\selectfont\bfseries Enterprise Food Delivery\\[1mm] \& Operations Platform}\\[8mm]
+  {\color{white!82}\sffamily\fontsize{13}{18}\selectfont A single web platform for ordering, in-house delivery,\\ inventory, payments and business intelligence.}\\[10mm]
+  {\color{white!62}\sffamily\fontsize{10.5}{14}\selectfont London, United Kingdom \quad\textbullet\quad 45-Day Delivery \quad\textbullet\quad 60 Days Support}
+\end{tcolorbox}
+
+\vspace{9mm}
+\hspace{22mm}\begin{minipage}[t][152mm][t]{\dimexpr\paperwidth-44mm\relax}
+
+{\color{brandnavy}\sffamily\bfseries\large Prepared and delivered by}\\[1mm]
+{\color{brandline}\rule{\linewidth}{1pt}}\\[3mm]
+
+\begin{tabularx}{\linewidth}{@{}p{0.47\linewidth}p{0.47\linewidth}@{}}
+{\sffamily\bfseries\color{brandnavy}\large Mohammed Hyder Ali} &
+{\sffamily\bfseries\color{brandnavy}\large Om Verma} \\[-3pt]
+{\color{brandaccent}\sffamily\small\bfseries Project Lead \& Backend Architecture} &
+{\color{brandaccent}\sffamily\small\bfseries Product Engineering \& Front-End Architecture} \\[-1pt]
+{\color{brandgrey}\small +91 8639264454} &
+{\color{brandgrey}\small +91 6281704551} \\[-1pt]
+&
+{\color{brandgrey}\small \href{https://omverma-portfolio.netlify.app/}{omverma-portfolio.netlify.app}} \\
+\end{tabularx}
+
+\vfill
+{\color{brandline}\rule{\linewidth}{0.8pt}}\\[2mm]
+{\color{brandgrey}\sffamily\footnotesize
+Document reference: \textbf{PROP/FD/2026/001} \quad\textbullet\quad
+Version \textbf{1.0} \quad\textbullet\quad
+Issued \textbf{\today} \quad\textbullet\quad
+Commercially valid for \textbf{30 days} from issue}
+
+\end{minipage}
+
+\restoregeometry
+\end{titlepage}
+
+\pagestyle{main}
+\setcounter{page}{2}
+
+% ============================================================
+%  DOCUMENT CONTROL
+% ============================================================
+\section*{\color{brandnavy}Document Control}
+\addcontentsline{toc}{section}{Document Control}
+\vspace{-4pt}{\color{brandline}\titlerule[1.1pt]}\vspace{6pt}
+
+\begin{tabularx}{\linewidth}{@{}L{0.30\linewidth}Y@{}}
+\toprule
+\textbf{Document title} & Enterprise Food Delivery \& Operations Platform --- Commercial Proposal and Statement of Work \\
+\textbf{Reference} & PROP/FD/2026/001 \\
+\textbf{Version} & 1.0 (Issued for client review) \\
+\textbf{Date of issue} & \today \\
+\textbf{Prepared by} & Mohammed Hyder Ali \textperiodcentered{} Om Verma \\
+\textbf{Prepared for} & The Client --- London, United Kingdom \\
+\textbf{Commercial validity} & 30 calendar days from date of issue \\
+\textbf{Classification} & Confidential --- for the named recipient only \\
+\textbf{Status} & Awaiting client confirmation and sign-off \\
+\bottomrule
+\end{tabularx}
+
+\vspace{10pt}
+\begin{keybox}
+\textbf{How to read this document.} Sections 1 to 8 are written in plain business
+language and require no technical background --- they describe \emph{what the platform
+does} and \emph{what it is worth}. Sections 9 to 15 cover delivery, commercials and
+terms. Section 13 (\textbf{Out of Scope}) is as important as the feature list: it
+defines the exact boundary of the fixed price, and anything outside it is chargeable
+once development has started.
+\end{keybox}
+
+\vspace{4pt}
+{\color{brandgrey}\footnotesize
+\textbf{Confidentiality.} This document and its contents are confidential and are supplied
+solely for the purpose of evaluating the proposed engagement. It may not be reproduced or
+disclosed to any third party without prior written consent.}
+
+\clearpage
+
+% ============================================================
+%  CONTENTS
+% ============================================================
+{\hypersetup{linkcolor=brandink}
+\renewcommand{\contentsname}{\color{brandnavy}Contents}
+\tableofcontents}
+
+\clearpage
+% ============================================================
+\section{Executive Summary}
+% ============================================================
+
+You are commissioning a single, web-based platform that runs the entire commercial
+operation of your food business --- from the moment a customer in London opens your
+website, through kitchen preparation, in-house delivery inside your seven-mile service
+area, payment settlement via Stripe, and finally into the stock, sales and profitability
+reports you use to run the business.
+
+Today, most independent food businesses in London reach their customers through
+third-party marketplaces. Those marketplaces are effective at discovery, but they are
+expensive at scale and, critically, they own the customer relationship. Published 2026
+UK figures place aggregator commission at roughly \textbf{14--16\%} where the restaurant
+delivers its own orders, and \textbf{25--30\%} where the platform's couriers deliver.
+Every repeat order from a customer you have already served and already satisfied is
+charged again at that rate.
+
+This platform is the direct alternative. It does not replace marketplaces --- it
+gives you a channel you own, where the cost of taking an order falls to the card
+processing fee alone (Stripe, \textbf{1.5\% + \GBP{0.20}} on UK cards), and where
+the customer, their order history and their contact permission belong to you.
+
+\begin{tealbox}
+\textbf{The commercial headline.} On a conservative model --- a business taking
+250 orders a week at a \GBP{22} average order value, moving just \textbf{40\%} of that
+volume to its own platform --- the annual saving against a \textbf{14\%} self-delivery
+marketplace rate is approximately \textbf{\GBP{13{,}260}}. Against a \textbf{30\%}
+platform-delivery rate it is approximately \textbf{\GBP{31{,}560}}. Against a one-time
+investment of \INR{94{,}999}, the payback period is measured in \textbf{weeks, not years}.
+Full workings, assumptions and the honest limitations of this model are set out in Section~4.
+\end{tealbox}
+
+\subsection{What is being delivered}
+
+\begin{tabularx}{\linewidth}{@{}L{0.30\linewidth}Y@{}}
+\toprule
+\hdrow \thead{Item} & \thead{Summary} \\
+\midrule
+\textbf{The product} & A responsive, enterprise-grade web application covering customer
+ordering, live delivery tracking, kitchen operations, inventory and stock control, menu
+and pricing management, Stripe payments, email notifications, role-based administration
+and full business analytics. Everything runs in the browser --- no app store, no downloads. \\
+\altrow \textbf{Service area} & Automated delivery-zone enforcement with a configurable
+radius, set to \textbf{7 miles} from the store, validated by Google Maps geocoding at
+the point of checkout. \\
+\textbf{Access control} & Thirteen distinct operational roles with granular permissions,
+under a Super Admin who holds end-to-end control of the entire system. \\
+\altrow \textbf{Payments} & Stripe, configured for the UK market in GBP, with card
+payments, secure customer authentication, refunds, and automated reconciliation
+against orders. \\
+\textbf{Delivery timeline} & \textbf{45 calendar days} from written confirmation and
+receipt of the initial payment. \\
+\altrow \textbf{Commercial} & \textbf{\INR{94{,}999}} fixed price, inclusive of design,
+development, testing, deployment, training and \textbf{60 days} of pre- and post-launch
+support. \\
+\textbf{Cloud costs} & All cloud and infrastructure charges incurred \emph{during
+development} are borne by us. One month of post-launch cloud hosting is provided
+\textbf{complimentary}. \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Why this team}
+
+Both engineers on this project work daily in the exact technology set this platform
+requires --- Next.js and React on the front end, Django and PostgreSQL on the back end,
+Stripe for payments and Google Maps for location intelligence. This is not a stack being
+learned on your budget; it is the stack we have shipped repeatedly. That is the single
+biggest reason a 45-day delivery window is credible rather than optimistic.
+
+\begin{keybox}
+\textbf{A note on honesty.} This proposal deliberately includes an explicit
+out-of-scope list (Section~13), a risk register (Section~14), a statement of what
+we need from you (Section~11), and a set of ongoing costs you will carry after launch
+(Section~4.6). A proposal that only lists benefits is a proposal that has not been
+thought through. We would rather agree the boundary now than discover it in week six.
+\end{keybox}
+
+\clearpage
+
+% ============================================================
+\section{Project Confirmation --- Our Understanding of Your Requirement}
+% ============================================================
+
+This section restates your requirement in our own words. \textbf{Please read it
+carefully.} If any statement here is wrong or incomplete, it must be corrected before
+sign-off, because the fixed price and the 45-day timeline are both derived from it.
+
+\subsection{The business you are building}
+
+You operate a food business serving the London market with your \textbf{own delivery
+team} --- not outsourced couriers. You want to stop being dependent on third-party
+marketplaces for the orders you could take directly, and you want the operational
+software that a serious multi-site food business needs: real stock control, real
+costing, real reporting, and real control over who in your organisation can do what.
+
+\subsection{Confirmed requirements}
+
+\begin{tabularx}{\linewidth}{@{}C{0.07\linewidth}Y@{}}
+\toprule
+\hdrow \thead{\#} & \thead{Requirement as we understand it} \\
+\midrule
+1 & A \textbf{web-only} solution. Everything --- customer ordering, staff operations,
+delivery rider workflow, and administration --- runs in a web browser on desktop, tablet
+and mobile. No native mobile applications are in scope. \\
+\altrow 2 & \textbf{Multi-role, enterprise-grade access control}, with a Super Admin who
+has complete end-to-end authority over the software, its configuration, its users and
+its data. \\
+3 & \textbf{In-house delivery} with complete, live tracking --- the customer, the store
+and the administrator all see the same real-time order and delivery status. \\
+\altrow 4 & A \textbf{7-mile delivery radius} from the store, enforced automatically at
+checkout. Addresses outside the radius cannot place a delivery order. \\
+5 & \textbf{Inventory and stock management}, linked to the menu, so that stock
+consumption, low-stock alerts and automatic item availability are driven by real orders. \\
+\altrow 6 & \textbf{Menu, catalogue and price management}, including modifiers, options,
+variants and per-item availability, controlled by authorised roles only. \\
+7 & \textbf{Payments via Stripe} in GBP, appropriate to a UK-based business, including
+refunds and reconciliation. \\
+\altrow 8 & \textbf{Sales, analytics and business intelligence} --- revenue, order,
+product, delivery and stock reporting for management decision-making. \\
+9 & \textbf{Order status and real-time updates} throughout the entire order lifecycle,
+visible to every party that needs it. \\
+\altrow 10 & \textbf{Email notifications} at every significant order and account event. \\
+11 & \textbf{Customer account creation} and self-service --- order history, saved
+addresses, saved payment methods and reordering. \\
+\altrow 12 & An \textbf{end-to-end solution} --- design, build, test, deploy, train and
+support --- delivered as one accountable engagement. \\
+\bottomrule
+\end{tabularx}
+
+\begin{accentbox}
+\textbf{Scope boundary.} The feature list in Section~6 and the exclusions in Section~13
+together define the fixed price. \textbf{Any feature, integration, screen or behaviour
+not described in this document will be treated as a change request and quoted separately
+once development has started.} This is not a commercial tactic --- it is the mechanism
+that protects your delivery date.
+\end{accentbox}
+
+\clearpage
+% ============================================================
+\section{The Commercial Case --- Why Own the Channel}
+% ============================================================
+
+\subsection{What marketplaces actually cost a London food business}
+
+Third-party marketplaces are a customer-acquisition service, and they are priced like
+one. The table below sets out typical published UK rates for 2026. Rates are negotiated
+per restaurant and your own agreements will govern; these are the market ranges.
+
+\begin{tabularx}{\linewidth}{@{}L{0.26\linewidth}C{0.20\linewidth}C{0.20\linewidth}Y@{}}
+\toprule
+\hdrow \thead{Channel} & \thead{Platform delivers} & \thead{You deliver} & \thead{Who owns the customer} \\
+\midrule
+Uber Eats & $\sim$30\% & $\sim$14--16\% & The platform \\
+\altrow Deliveroo & $\sim$25--30\% & $\sim$15\%+ & The platform \\
+Just Eat & $\sim$14--30\% & $\sim$14--17\% & The platform \\
+\altrow \textbf{Your own platform} & \multicolumn{2}{c}{\textbf{1.5\% + \GBP{0.20}} (Stripe only)} & \textbf{You} \\
+\bottomrule
+\end{tabularx}
+
+\vspace{4pt}
+{\color{brandgrey}\footnotesize Commission is quoted excluding VAT. VAT charged on
+marketplace commission is generally reclaimable by a VAT-registered business, so it is
+excluded from all calculations in this document to keep the comparison conservative.
+Marketplaces may additionally levy per-order admin fees and optional paid promotion.}
+
+\subsection{The economics of a single \GBP{22} order}
+
+\begin{tabularx}{\linewidth}{@{}L{0.34\linewidth}C{0.18\linewidth}C{0.18\linewidth}Y@{}}
+\toprule
+\hdrow \thead{Route to the customer} & \thead{Rate} & \thead{Cost of the order} & \thead{You keep} \\
+\midrule
+Marketplace, platform delivers & 30\% & \GBP{6.60} & \GBP{15.40} \\
+\altrow Marketplace, you deliver & 14\% & \GBP{3.08} & \GBP{18.92} \\
+\rowcolor{brandteal!12} \textbf{Your own platform} & \textbf{Stripe only} & \textbf{\GBP{0.53}} & \textbf{\GBP{21.47}} \\
+\bottomrule
+\end{tabularx}
+
+\vspace{6pt}
+\begin{tealbox}
+Every \GBP{22} order moved from a self-delivery marketplace listing to your own platform
+returns \textbf{\GBP{2.55}} to the business. Moved from a platform-delivery listing, it
+returns \textbf{\GBP{6.07}}. On a food business's margins, that is not a rounding
+difference --- for many independents it is the difference between a delivery order being
+profitable and being marginal.
+\end{tealbox}
+
+\subsection{The three things a marketplace will not give you}
+
+\begin{enumerate}[leftmargin=17pt]
+\item \textbf{The customer list.} You cannot email, re-target or reward a customer you
+are not permitted to contact. Your own platform builds a permission-based customer
+database from order one.
+\item \textbf{Basket control.} You set the menu, the pricing, the upsells and the
+promotions --- not an algorithm optimising for the platform's revenue. Published UK data
+indicates consumers spend materially more per order when ordering direct.
+\item \textbf{Operational data.} Stock movement, prep times, delivery times, product
+profitability and rider performance are your data, in one place, rather than fragmented
+across portals you do not control.
+\end{enumerate}
+
+\clearpage
+
+% ============================================================
+\section{Return on Investment}
+% ============================================================
+
+This section shows the financial case in full, including the assumptions behind it and
+the conditions under which it does \emph{not} hold. Please read Section~4.5 as carefully
+as you read the savings tables.
+
+\subsection{Model assumptions}
+
+\begin{tabularx}{\linewidth}{@{}L{0.42\linewidth}Y@{}}
+\toprule
+\hdrow \thead{Assumption} & \thead{Value used} \\
+\midrule
+Average order value (AOV) & \GBP{22} \\
+\altrow Marketplace rate --- conservative baseline & \textbf{14\%} (self-delivery tier, which
+matches your in-house delivery model) \\
+Marketplace rate --- upside baseline & 30\% (platform-delivery tier) \\
+\altrow Cost of taking a direct order & Stripe at 1.5\% + \GBP{0.20} = \GBP{0.53} on a
+\GBP{22} order \\
+Share of existing volume migrated to direct in year one & \textbf{40\%} \\
+\altrow Indicative conversion rate used for the investment & \INR{94{,}999} $\approx$
+\GBP{888} at \INR{107} = \GBP{1} \\
+Working month & 4.33 weeks \\
+\bottomrule
+\end{tabularx}
+
+\vspace{6pt}
+{\color{brandgrey}\footnotesize The 40\% migration assumption is deliberately
+conservative. Businesses that actively promote their direct channel --- QR codes on
+packaging, receipt inserts, a Google Business Profile order link, email and SMS
+follow-up --- commonly exceed it. Businesses that build a platform and do not promote
+it will fall short of it.}
+
+\subsection{Scenario analysis --- annual saving}
+
+\textbf{Baseline A: measured against a 14\% self-delivery marketplace rate}
+(the conservative case, and the one we recommend you plan against).
+
+\begin{tabularx}{\linewidth}{@{}L{0.24\linewidth}C{0.14\linewidth}C{0.15\linewidth}C{0.15\linewidth}C{0.13\linewidth}Y@{}}
+\toprule
+\hdrow \thead{Scenario} & \thead{Orders /week} & \thead{Direct GMV /month} & \thead{Commission avoided} & \thead{Stripe cost} & \thead{Net saving /year} \\
+\midrule
+Conservative & 120 & \GBP{4{,}576} & \GBP{641} & \GBP{110} & \textbf{\GBP{6{,}365}} \\
+\altrow \textbf{Base case} & \textbf{250} & \textbf{\GBP{9{,}533}} & \textbf{\GBP{1{,}335}} & \textbf{\GBP{230}} & \textbf{\GBP{13{,}260}} \\
+Growth & 450 & \GBP{17{,}160} & \GBP{2{,}402} & \GBP{413} & \textbf{\GBP{23{,}868}} \\
+\bottomrule
+\end{tabularx}
+
+\vspace{10pt}
+\textbf{Baseline B: measured against a 30\% platform-delivery marketplace rate}
+(applies to whatever share of your volume currently sits on the full-service tier).
+
+\begin{tabularx}{\linewidth}{@{}L{0.24\linewidth}C{0.14\linewidth}C{0.15\linewidth}C{0.15\linewidth}C{0.13\linewidth}Y@{}}
+\toprule
+\hdrow \thead{Scenario} & \thead{Orders /week} & \thead{Direct GMV /month} & \thead{Commission avoided} & \thead{Stripe cost} & \thead{Net saving /year} \\
+\midrule
+Conservative & 120 & \GBP{4{,}576} & \GBP{1{,}373} & \GBP{110} & \textbf{\GBP{15{,}151}} \\
+\altrow \textbf{Base case} & \textbf{250} & \textbf{\GBP{9{,}533}} & \textbf{\GBP{2{,}860}} & \textbf{\GBP{230}} & \textbf{\GBP{31{,}564}} \\
+Growth & 450 & \GBP{17{,}160} & \GBP{5{,}148} & \GBP{413} & \textbf{\GBP{56{,}815}} \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Payback and year-one return}
+
+Calculated against \textbf{Baseline A (14\%)} --- the conservative case.
+
+\begin{tabularx}{\linewidth}{@{}L{0.22\linewidth}C{0.17\linewidth}C{0.17\linewidth}C{0.19\linewidth}Y@{}}
+\toprule
+\hdrow \thead{Scenario} & \thead{Investment} & \thead{Payback period} & \thead{Year-one net benefit} & \thead{Year-one ROI} \\
+\midrule
+Conservative & \GBP{888} & $\sim$7.3 weeks & \GBP{5{,}477} & $\sim$617\% \\
+\altrow \textbf{Base case} & \textbf{\GBP{888}} & \textbf{$\sim$3.5 weeks} & \textbf{\GBP{12{,}372}} & \textbf{$\sim$1{,}393\%} \\
+Growth & \GBP{888} & $\sim$1.9 weeks & \GBP{22{,}980} & $\sim$2{,}588\% \\
+\bottomrule
+\end{tabularx}
+
+\vspace{6pt}
+\begin{tealbox}
+\textbf{Base case, stated plainly.} A one-time investment of \INR{94{,}999}
+($\approx$\GBP{888}) is recovered in under a month of trading, and returns
+approximately \textbf{\GBP{13{,}260} in year one} on the conservative marketplace
+baseline. Even in the lowest-volume scenario modelled, the platform pays for itself
+within two months.
+\end{tealbox}
+
+\subsection{Additional value not counted in the tables above}
+
+The savings above are deliberately limited to commission avoidance, because that is the
+one benefit that is arithmetically certain once volume migrates. The following are real,
+well-evidenced, and \textbf{deliberately excluded from the headline numbers} because
+their size depends on execution rather than on the software alone.
+
+\begin{longtable}{@{}L{0.28\linewidth}L{0.68\linewidth}@{}}
+\toprule
+\hdrow \thead{Value driver} & \thead{Basis and indicative scale} \\
+\midrule
+\endfirsthead
+\toprule \hdrow \thead{Value driver} & \thead{Basis and indicative scale} \\ \midrule
+\endhead
+\bottomrule \endfoot \bottomrule \endlastfoot
+\textbf{Higher average order value} & Published UK data indicates consumers spend
+around \textbf{35\% more per order} when ordering directly from a restaurant rather than
+through a marketplace, because the venue controls merchandising and upsell. On base-case
+direct volume, even a 10\% uplift would add roughly \GBP{11{,}440} of additional annual
+revenue. \\
+\altrow \textbf{Reduced food waste} & WRAP data indicates UK hospitality wastes around
+\textbf{18\% of the food it purchases}, at roughly \textbf{\GBP{10{,}000} per outlet per
+year}, of which about 21\% arises from spoilage. Live stock tracking, low-stock alerts
+and consumption reporting address the spoilage component: capturing 20--35\% of it is
+worth an indicative \textbf{\GBP{420}--\GBP{735} per outlet per year}. \\
+\textbf{Recovered staff hours} & Manual stock counts, phone-order taking, WhatsApp
+dispatch coordination and end-of-day cash-ups are replaced by system workflow.
+Two recovered hours per day at UK operational wage rates is a five-figure annual figure
+for most sites. \\
+\altrow \textbf{Owned customer database} & A permission-based customer list is a
+compounding asset. Its value is not modelled here because it depends entirely on how you
+use it --- but it is the single asset a marketplace will never sell you. \\
+\textbf{Margin visibility} & Product-level profitability reporting lets you remove or
+re-price loss-making menu items. On a typical menu this is frequently the largest single
+margin lever available, and it is invisible without the data. \\
+\bottomrule
+\end{longtable}
+
+\subsection{Where this model breaks --- read this}
+
+\begin{warnbox}
+\textbf{The software does not generate the saving. Migrating customers generates the
+saving.} If your customers continue ordering through marketplaces out of habit and you
+do not actively drive them to your own site, the commission avoidance in Section~4.2
+will not materialise, regardless of how good the platform is. Specifically:
+
+\begin{itemize}
+\item \textbf{Marketplaces provide discovery; your platform does not.} New customers who
+have never heard of you will still find you on Deliveroo or Uber Eats. The correct
+strategy is almost never "leave the marketplaces" --- it is "acquire on the marketplace,
+retain on your own platform."
+\item \textbf{Migration requires deliberate effort from you}: QR codes on packaging,
+inserts in every marketplace delivery bag, a direct-order link on your Google Business
+Profile, first-order incentives, and email follow-up. Budget for it.
+\item \textbf{If you are currently on a 14\% self-delivery tier, your saving is the 14\%
+case, not the 30\% case.} We have modelled the 14\% case as the primary scenario for
+exactly this reason. Treat any vendor quoting you a flat "save 30\%" without asking
+which tier you are on with appropriate scepticism.
+\item \textbf{Delivery cost does not disappear.} You already run in-house delivery, so
+this platform does not add rider cost --- but nor does it remove it. Rider wages,
+vehicles, insurance and fuel remain your cost in every scenario modelled.
+\end{itemize}
+\end{warnbox}
+
+\subsection{Ongoing costs you will carry after launch}
+
+Presented so that your year-one figures are complete rather than flattering.
+
+\begin{tabularx}{\linewidth}{@{}L{0.34\linewidth}C{0.26\linewidth}Y@{}}
+\toprule
+\hdrow \thead{Ongoing cost} & \thead{Indicative monthly} & \thead{Notes} \\
+\midrule
+Cloud hosting \& database & \GBP{30}--\GBP{80} & \textbf{First month complimentary} (paid by us) \\
+\altrow Google Maps API usage & \GBP{15}--\GBP{50} & Scales with order volume \\
+Stripe processing & Variable & 1.5\% + \GBP{0.20} per UK card transaction \\
+\altrow Transactional email service & \GBP{0}--\GBP{20} & Free tier sufficient at launch volumes \\
+Domain \& SSL & $<$\GBP{2} & Approx. \GBP{15}--\GBP{20} per year \\
+\midrule
+\rowcolor{brandlight} \textbf{Indicative total (excl. Stripe)} & \textbf{\GBP{50}--\GBP{150}} & \textbf{$\approx$\GBP{600}--\GBP{1{,}800} per year} \\
+\bottomrule
+\end{tabularx}
+
+\vspace{6pt}
+Netting the mid-point of these running costs (\GBP{1{,}200} per year) against the
+conservative Baseline~A saving still leaves a year-one net benefit of approximately
+\textbf{\GBP{12{,}060}} in the base-case scenario.
+
+\vspace{6pt}
+{\color{brandgrey}\footnotesize
+\textbf{Sources.} Marketplace commission ranges, direct-ordering AOV differential and UK
+hospitality food-waste figures are drawn from published 2026 UK market commentary and
+WRAP sector data. Stripe pricing is the published UK standard rate for domestic cards.
+All figures are indicative, are presented for illustration, and do not constitute
+financial advice; your own trading data and platform agreements should be used for any
+final investment decision. Currency conversion is indicative only and subject to
+exchange-rate movement.}
+
+\clearpage
+% ============================================================
+\section{How the Platform Works --- A Plain-English Walkthrough}
+% ============================================================
+
+Before the feature list, here is the platform described the way you would describe it to
+a member of staff on their first day. No technical vocabulary is used.
+
+\subsection{The customer journey}
+
+\begin{enumerate}[leftmargin=17pt]
+\item \textbf{Arrival.} A customer opens your website on a phone or laptop. The site
+loads quickly, looks and feels like a premium brand, and works equally well on any
+screen size.
+\item \textbf{Address check.} Before they browse, they enter their postcode or address.
+The system checks it against your \textbf{7-mile service area}. If they are inside it,
+they see delivery options; if they are outside it, they are told immediately and offered
+collection instead --- rather than discovering the problem after they have built a basket.
+\item \textbf{Browsing.} They see your menu, organised into categories, with images,
+descriptions, prices, dietary and allergen information. Items you have run out of are
+visibly and automatically marked unavailable --- because the system knows your stock.
+\item \textbf{Building the order.} They choose sizes, options, extras and add-ons.
+Prices update live. The basket persists if they leave and return.
+\item \textbf{Account.} They create an account --- or check out as a guest and be offered
+an account afterwards. Registered customers get saved addresses, saved cards, order
+history and one-tap reordering.
+\item \textbf{Checkout.} They select a delivery slot or ASAP, apply a promotion code if
+they have one, and see a fully itemised total including delivery fee, any minimum-order
+top-up, and VAT treatment.
+\item \textbf{Payment.} They pay by card through \textbf{Stripe}. Card details never
+touch your systems --- Stripe handles them entirely. Strong Customer Authentication
+(the bank verification step UK customers expect) is handled automatically.
+\item \textbf{Confirmation.} The order is confirmed on screen and by \textbf{email}
+within seconds, with an itemised receipt and a live tracking link.
+\item \textbf{Live tracking.} The customer watches the order move through
+\emph{Confirmed} $\rightarrow$ \emph{Accepted} $\rightarrow$ \emph{Preparing}
+$\rightarrow$ \emph{Ready} $\rightarrow$ \emph{Out for delivery} $\rightarrow$
+\emph{Delivered}, on a live map, without refreshing the page. They receive an email at
+each significant milestone.
+\item \textbf{After delivery.} They are invited to rate the order, and their history is
+saved for one-tap reordering next time.
+\end{enumerate}
+
+\subsection{What happens inside your business at the same time}
+
+\begin{enumerate}[leftmargin=17pt]
+\item \textbf{The kitchen} sees the order appear instantly on a live kitchen screen, with
+a countdown timer, item-by-item detail, allergen flags and special instructions. Staff
+mark items as they are prepared.
+\item \textbf{Stock is deducted automatically} as the order is accepted. If a component
+drops below its threshold, the responsible manager is alerted --- and if it hits zero,
+affected menu items are taken off sale automatically so you never sell what you cannot make.
+\item \textbf{Dispatch} sees every ready order and every available rider on one screen,
+and assigns deliveries --- manually, or with a suggested assignment based on proximity
+and current load.
+\item \textbf{The rider} opens the platform on their phone, sees their assigned run,
+gets turn-by-turn navigation, and confirms pickup and delivery. Their location feeds the
+customer's live tracking map.
+\item \textbf{Finance} sees each payment reconciled against its order automatically,
+processes refunds directly from the order screen, and exports settlement reports.
+\item \textbf{Management} sees revenue, order counts, average order value, best and worst
+performing products, delivery times, rider performance and stock value --- live, on one
+dashboard, with the ability to drill into any figure.
+\item \textbf{The Super Admin} sits above all of it, with authority over every setting,
+every user, every permission and every record in the system.
+\end{enumerate}
+
+\begin{keybox}
+\textbf{One system, one truth.} The reason this is a single platform rather than a
+website plus a few spreadsheets is that every one of the steps above reads and writes the
+same data. The stock number the kitchen sees, the availability the customer sees, and the
+value on the management report are the same number --- not three numbers that need
+reconciling at the end of the week.
+\end{keybox}
+
+\clearpage
+
+% ============================================================
+\section{Roles and Access Control}
+% ============================================================
+
+You asked for enterprise-grade, multi-role management. The platform ships with the
+following thirteen roles. Each role sees only the screens and data it needs, and every
+sensitive action is permission-controlled and recorded in an audit log.
+
+\subsection{The role matrix}
+
+\begin{longtable}{@{}C{0.05\linewidth}L{0.22\linewidth}L{0.66\linewidth}@{}}
+\toprule
+\hdrow \thead{\#} & \thead{Role} & \thead{What this role can do} \\
+\midrule
+\endfirsthead
+\multicolumn{3}{@{}l}{\footnotesize\color{brandgrey}\textit{Role matrix --- continued}}\\
+\toprule
+\hdrow \thead{\#} & \thead{Role} & \thead{What this role can do} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\bottomrule
+\endlastfoot
+
+1 & \textbf{Super Admin} & Complete end-to-end control of the software. Creates and
+removes every other user, defines what each role may do, configures the delivery radius,
+tax rules, payment settings and system-wide parameters, views every record and every
+report, and can access the full audit trail. Nothing in the system is hidden from this
+role. \\
+
+\altrow 2 & \textbf{Business Owner} & Full commercial oversight: all revenue, cost,
+margin and performance reporting across the business, plus the ability to approve pricing
+and promotional changes. Cannot alter system-level configuration or security settings. \\
+
+3 & \textbf{Store / Branch Manager} & Day-to-day running of a store: opening hours,
+accepting and rejecting orders, order overrides, staff rotas within the store, local
+stock and local reporting. Scoped to their own store only. \\
+
+\altrow 4 & \textbf{Kitchen / Production Staff} & The live kitchen screen: incoming
+orders, preparation timers, item-level completion, and marking orders ready. No access to
+pricing, customer data or financials. \\
+
+5 & \textbf{Inventory \& Stock Controller} & Ingredients and stock items, suppliers,
+purchase records, goods-in, stock counts, wastage recording, reorder thresholds and stock
+valuation reporting. \\
+
+\altrow 6 & \textbf{Menu \& Catalogue Manager} & Menu structure, categories, items,
+descriptions, images, modifiers, options, allergen and dietary information, item-level
+availability and scheduling. \\
+
+7 & \textbf{Pricing Manager} & Prices, price bands, delivery fees, minimum order values,
+service charges and tax rates. Separated from the catalogue role so that content editing
+and commercial pricing can be delegated independently. \\
+
+\altrow 8 & \textbf{Dispatch Coordinator} & The live dispatch board: ready orders,
+rider availability, assignment and reassignment, delivery exception handling and route
+oversight. \\
+
+9 & \textbf{Delivery Rider} & Their own assigned deliveries only: run list, navigation,
+pickup confirmation, delivery confirmation with proof of delivery, and shift status. \\
+
+\altrow 10 & \textbf{Finance / Accounts} & Payments, settlements, refunds, chargeback
+records, reconciliation reports, payout tracking and financial exports. \\
+
+11 & \textbf{Customer Support Agent} & Customer accounts, order lookup, order status
+amendments, issuing refunds within a defined limit, and a full communication history per
+order. Sensitive financial and configuration areas are hidden. \\
+
+\altrow 12 & \textbf{Marketing / Promotions Manager} & Promotion codes, discounts,
+campaign scheduling, banners, featured items, and campaign performance reporting. \\
+
+13 & \textbf{Analyst (read-only)} & Read-only access to all reporting and analytics with
+no ability to change any record. Intended for accountants, consultants and investors. \\
+
+\altrow --- & \textbf{Customer} & The public-facing account: ordering, order history,
+saved addresses, saved cards, live tracking, reordering, and marketing preferences. \\
+
+\end{longtable}
+
+\subsection{How permissions actually work}
+
+\begin{itemize}
+\item \textbf{Permissions are granular, not role-shaped.} Each role is a named bundle of
+individual permissions. The Super Admin can add or remove a single permission from a role
+without any development work.
+\item \textbf{Custom roles.} New roles can be created from the existing permission set at
+any time --- for example a "Weekend Duty Manager" with a subset of Store Manager rights.
+\item \textbf{Store scoping.} Roles can be restricted to a specific store, so a manager
+of one location cannot see another location's data.
+\item \textbf{Least privilege by default.} A newly created user starts with no access and
+is granted what they need, rather than starting with everything and having access removed.
+\item \textbf{Full audit trail.} Every login, permission change, price change, refund,
+stock adjustment and order override is recorded with the user, the timestamp and the
+before/after value. The audit log cannot be edited by anyone, including the Super Admin.
+\item \textbf{Secure authentication} with enforced password policy, session expiry,
+account lockout after repeated failed attempts, and secure password reset by email.
+\end{itemize}
+
+\clearpage
+% ============================================================
+\section{Feature \& Requirements Specification}
+% ============================================================
+
+This is the definitive list of what will be built. It is written without technical
+vocabulary so that it can be reviewed and signed off by anyone in your business.
+
+\textbf{Every numbered requirement below is included in the fixed price.} Anything not
+listed here, and not listed in Section~13, should be raised now --- Section~16 tells you
+how.
+
+\begin{keybox}
+\textbf{Reading the requirement IDs.} Each requirement carries a unique reference
+(for example \textbf{FR-07-04}). Please use these references in your feedback, in
+acceptance testing and in any future change request, so that both sides are always
+talking about the same line item.
+\end{keybox}
+
+% ---------------------------------------------------------
+\modtitle{MODULE 01}{Customer Storefront \& Ordering Experience}
+
+\begin{longtable}{@{}L{0.13\linewidth}L{0.28\linewidth}L{0.52\linewidth}@{}}
+\toprule
+\hdrow \thead{Ref} & \thead{Feature} & \thead{What it means for the business} \\
+\midrule
+\endfirsthead
+\toprule \hdrow \thead{Ref} & \thead{Feature} & \thead{What it means for the business} \\ \midrule
+\endhead
+\bottomrule \endfoot \bottomrule \endlastfoot
+FR-01-01 & Branded home and landing experience & A premium, fast-loading storefront carrying your brand, built to convert visitors into orders. \\
+\altrow FR-01-02 & Menu browsing by category & Clear navigation through categories, sections and featured items with images and descriptions. \\
+FR-01-03 & Product detail view & Full item description, image, price, portion/size options, dietary tags and allergen information. \\
+\altrow FR-01-04 & Item options, extras and modifiers & Sizes, bases, toppings, add-ons and combinations, with prices that update live as choices are made. \\
+FR-01-05 & Search and filtering & Search by dish name and filter by category, dietary preference (e.g. vegetarian, vegan) and price. \\
+\altrow FR-01-06 & Persistent shopping basket & The basket survives page changes, browser refresh and returning later on the same device. \\
+FR-01-07 & Live availability & Items that are out of stock are automatically shown as unavailable and cannot be ordered. \\
+\altrow FR-01-08 & Order type selection & Delivery or collection, chosen up front and reflected throughout pricing and fulfilment. \\
+FR-01-09 & Delivery slot selection & ASAP or a scheduled slot, limited by your opening hours and kitchen capacity settings. \\
+\altrow FR-01-10 & Guest checkout & Customers can order without creating an account, and are offered an account after payment. \\
+FR-01-11 & Itemised checkout summary & Subtotal, delivery fee, discounts, service charge and total shown transparently before payment. \\
+\altrow FR-01-12 & Minimum order enforcement & Configurable minimum basket value per delivery zone, enforced at checkout. \\
+FR-01-13 & Order notes and special instructions & Free-text notes per item and per order, surfaced to the kitchen and to the rider. \\
+\altrow FR-01-14 & Fully responsive design & Identical functionality on mobile, tablet and desktop, with mobile treated as the primary device. \\
+FR-01-15 & Store open/closed handling & The storefront respects trading hours, holiday closures and a manual "pause orders" switch. \\
+\end{longtable}
+
+% ---------------------------------------------------------
+\modtitle{MODULE 02}{Delivery Zone \& 7-Mile Radius Management}
+
+\begin{longtable}{@{}L{0.13\linewidth}L{0.28\linewidth}L{0.52\linewidth}@{}}
+\toprule
+\hdrow \thead{Ref} & \thead{Feature} & \thead{What it means for the business} \\
+\midrule
+\endfirsthead
+\toprule \hdrow \thead{Ref} & \thead{Feature} & \thead{What it means for the business} \\ \midrule
+\endhead
+\bottomrule \endfoot \bottomrule \endlastfoot
+FR-02-01 & Configurable delivery radius & Set to \textbf{7 miles} from the store at launch, and changeable by the Super Admin at any time without development work. \\
+\altrow FR-02-02 & Address validation and geocoding & Customer addresses are validated and converted to a precise location using Google Maps, so postcode errors are caught before an order is taken. \\
+FR-02-03 & Automatic in/out-of-area decision & The system decides instantly whether an address is deliverable and tells the customer clearly. \\
+\altrow FR-02-04 & Out-of-area handling & Customers outside the radius are offered collection and, optionally, invited to register interest for future expansion. \\
+FR-02-05 & Distance-banded delivery fees & Different delivery charges for different distance bands (e.g. 0--2, 2--4, 4--7 miles), each configurable. \\
+\altrow FR-02-06 & Distance-banded minimum orders & Higher minimum basket values for longer distances, protecting margin on the outer edge of the zone. \\
+FR-02-07 & Address autocomplete & Customers select their address from suggestions rather than typing it, reducing failed deliveries. \\
+\altrow FR-02-08 & Saved address re-validation & Saved addresses are re-checked against the current radius each time, so a change to the zone applies immediately. \\
+FR-02-09 & Zone map in the admin console & A visual map of your service area so managers can see exactly what is covered. \\
+\altrow FR-02-10 & Multi-store readiness & The zone engine is built so that additional stores, each with their own radius, can be added later. \\
+\end{longtable}
+
+% ---------------------------------------------------------
+\modtitle{MODULE 03}{Real-Time Order Tracking \& Live Delivery}
+
+\begin{longtable}{@{}L{0.13\linewidth}L{0.28\linewidth}L{0.52\linewidth}@{}}
+\toprule
+\hdrow \thead{Ref} & \thead{Feature} & \thead{What it means for the business} \\
+\midrule
+\endfirsthead
+\toprule \hdrow \thead{Ref} & \thead{Feature} & \thead{What it means for the business} \\ \midrule
+\endhead
+\bottomrule \endfoot \bottomrule \endlastfoot
+FR-03-01 & Defined order lifecycle & Placed $\rightarrow$ Confirmed $\rightarrow$ Accepted $\rightarrow$ Preparing $\rightarrow$ Ready $\rightarrow$ Out for delivery $\rightarrow$ Delivered, plus Cancelled and Refunded. \\
+\altrow FR-03-02 & Live customer tracking page & A tracking page that updates by itself, with no page refresh, showing the current stage and estimated arrival. \\
+FR-03-03 & Live rider location on a map & The customer sees the rider's position on a map once the order is out for delivery. \\
+\altrow FR-03-04 & Estimated time of arrival & A calculated ETA based on preparation time and live travel distance, updated as the delivery progresses. \\
+FR-03-05 & Real-time updates for staff & Every dashboard --- kitchen, dispatch, manager, admin --- updates live as order states change. \\
+\altrow FR-03-06 & Proof of delivery & The rider confirms delivery, with an optional photo and/or recipient name captured against the order. \\
+FR-03-07 & Delivery exception handling & Structured handling of "customer not present", "address not found" and failed deliveries, with escalation to dispatch. \\
+\altrow FR-03-08 & Order timeline & A complete, timestamped history of every state change on every order, visible to authorised staff. \\
+FR-03-09 & Live order board & A single screen showing every active order in the business and its current stage. \\
+\altrow FR-03-10 & Delivery performance capture & Actual preparation time, pickup time and delivery time recorded per order to feed reporting. \\
+\end{longtable}
+
+% ---------------------------------------------------------
+\modtitle{MODULE 04}{In-House Rider Workspace}
+
+\begin{longtable}{@{}L{0.13\linewidth}L{0.28\linewidth}L{0.52\linewidth}@{}}
+\toprule
+\hdrow \thead{Ref} & \thead{Feature} & \thead{What it means for the business} \\
+\midrule
+\endfirsthead
+\toprule \hdrow \thead{Ref} & \thead{Feature} & \thead{What it means for the business} \\ \midrule
+\endhead
+\bottomrule \endfoot \bottomrule \endlastfoot
+FR-04-01 & Mobile-optimised rider interface & A web interface designed for a phone in one hand, used through the browser --- no app installation. \\
+\altrow FR-04-02 & Shift status & Riders mark themselves available, on a delivery, on break or off shift. \\
+FR-04-03 & Assigned run list & The rider sees only their own assigned deliveries, in order, with addresses and customer notes. \\
+\altrow FR-04-04 & Navigation hand-off & One tap opens turn-by-turn directions to the delivery address in the phone's maps application. \\
+FR-04-05 & Pickup confirmation & The rider confirms collection from the store, which moves the order to "Out for delivery" and starts customer tracking. \\
+\altrow FR-04-06 & Delivery confirmation & The rider completes the delivery with proof of delivery, closing the order. \\
+FR-04-07 & Location sharing while on delivery & The rider's device shares location only while a delivery is active, feeding the customer's live map. \\
+\altrow FR-04-08 & Multi-drop support & A rider can carry more than one order at a time, in a defined sequence. \\
+FR-04-09 & Rider performance record & Deliveries completed, average delivery time and on-time rate recorded per rider for management reporting. \\
+\end{longtable}
+
+% ---------------------------------------------------------
+\modtitle{MODULE 05}{Kitchen Display \& Order Operations}
+
+\begin{longtable}{@{}L{0.13\linewidth}L{0.28\linewidth}L{0.52\linewidth}@{}}
+\toprule
+\hdrow \thead{Ref} & \thead{Feature} & \thead{What it means for the business} \\
+\midrule
+\endfirsthead
+\toprule \hdrow \thead{Ref} & \thead{Feature} & \thead{What it means for the business} \\ \midrule
+\endhead
+\bottomrule \endfoot \bottomrule \endlastfoot
+FR-05-01 & Live kitchen display screen & New orders appear instantly on a screen designed to be read across a busy kitchen. \\
+\altrow FR-05-02 & Preparation timers & A visible countdown per order, with colour-coded escalation as an order approaches or exceeds its target time. \\
+FR-05-03 & Item-level completion & Staff tick off individual items as they are prepared, so long orders can be tracked accurately. \\
+\altrow FR-05-04 & Allergen and special-instruction flags & Allergen warnings and customer notes are displayed prominently and cannot be missed. \\
+FR-05-05 & Order acceptance and rejection & Managers accept orders or reject them with a recorded reason, triggering automatic customer notification and refund where applicable. \\
+\altrow FR-05-06 & Preparation time control & Configurable default preparation times, and a manual "we are busy" adjustment that extends quoted times across the board. \\
+FR-05-07 & Mark ready for dispatch & A single action moves a completed order to the dispatch board. \\
+\altrow FR-05-08 & Order priority and sequencing & Scheduled orders surface at the right time rather than all at once. \\
+FR-05-09 & Kitchen ticket printing (browser) & Orders can be printed to a standard printer from the browser where a paper ticket is preferred. \\
+\end{longtable}
+
+% ---------------------------------------------------------
+\modtitle{MODULE 06}{Menu, Catalogue \& Pricing Management}
+
+\begin{longtable}{@{}L{0.13\linewidth}L{0.28\linewidth}L{0.52\linewidth}@{}}
+\toprule
+\hdrow \thead{Ref} & \thead{Feature} & \thead{What it means for the business} \\
+\midrule
+\endfirsthead
+\toprule \hdrow \thead{Ref} & \thead{Feature} & \thead{What it means for the business} \\ \midrule
+\endhead
+\bottomrule \endfoot \bottomrule \endlastfoot
+FR-06-01 & Category and menu structure & Create, rename, reorder and hide categories and sub-categories without any technical help. \\
+\altrow FR-06-02 & Menu item management & Add, edit, duplicate, archive and reorder dishes, with images, descriptions and tags. \\
+FR-06-03 & Variants and sizes & Multiple sizes or portions per item, each with its own price and its own stock impact. \\
+\altrow FR-06-04 & Modifier groups & Reusable option groups (e.g. "Choose a sauce", "Add extras") with minimum and maximum selection rules. \\
+FR-06-05 & Combos and meal deals & Bundle items into a single priced offering. \\
+\altrow FR-06-06 & Allergen and dietary information & Structured allergen data per item, supporting UK allergen-labelling obligations. \\
+FR-06-07 & Nutritional information fields & Optional calorie and nutritional fields per item where you choose to publish them. \\
+\altrow FR-06-08 & Price management & Base prices, modifier prices, and the ability to change any price with immediate effect. \\
+FR-06-09 & Scheduled availability & Items or whole categories available only at defined times (e.g. a lunch menu, a weekend special). \\
+\altrow FR-06-10 & Manual availability override & Take any item off sale instantly with one click, independently of stock. \\
+FR-06-11 & Delivery fee and charge configuration & Delivery fees, minimum orders, service charges and packaging charges, all configurable. \\
+\altrow FR-06-12 & VAT / tax configuration & Configurable tax rates and per-item tax treatment appropriate to UK food retail. \\
+FR-06-13 & Image upload and management & Upload, crop and replace dish images through the admin console. \\
+\altrow FR-06-14 & Price change history & Every price change recorded with who changed it, when, and the previous value. \\
+\end{longtable}
+
+\clearpage
+% ---------------------------------------------------------
+\modtitle{MODULE 07}{Inventory \& Stock Management}
+
+\begin{longtable}{@{}L{0.13\linewidth}L{0.28\linewidth}L{0.52\linewidth}@{}}
+\toprule
+\hdrow \thead{Ref} & \thead{Feature} & \thead{What it means for the business} \\
+\midrule
+\endfirsthead
+\toprule \hdrow \thead{Ref} & \thead{Feature} & \thead{What it means for the business} \\ \midrule
+\endhead
+\bottomrule \endfoot \bottomrule \endlastfoot
+FR-07-01 & Ingredient and stock item register & A full list of everything you hold, with units of measure, cost price and supplier. \\
+\altrow FR-07-02 & Recipe / bill of materials & Define what each menu item consumes, so selling a dish automatically depletes the right ingredients. \\
+FR-07-03 & Automatic stock deduction & Stock reduces in real time as orders are accepted --- no manual data entry. \\
+\altrow FR-07-04 & Live stock levels & Current quantity on hand for every item, visible at any moment. \\
+FR-07-05 & Low-stock thresholds and alerts & Set a reorder level per item; the responsible role is alerted by email and on-screen when it is breached. \\
+\altrow FR-07-06 & Automatic item suspension & When a required ingredient reaches zero, every menu item depending on it is taken off sale automatically. \\
+FR-07-07 & Goods receiving & Record deliveries from suppliers into stock, with quantity, cost and date. \\
+\altrow FR-07-08 & Supplier records & Supplier contact details, items supplied and purchase history. \\
+FR-07-09 & Purchase order recording & Raise and record purchase orders against suppliers and reconcile them on receipt. \\
+\altrow FR-07-10 & Stock counts & Perform a physical count, enter actual quantities, and see the variance against system stock. \\
+FR-07-11 & Wastage and spoilage recording & Log waste with a reason code, so waste becomes a measurable, reportable cost. \\
+\altrow FR-07-12 & Stock adjustment with audit & Any manual correction requires a reason and is permanently recorded against the user who made it. \\
+FR-07-13 & Stock valuation & Current value of stock on hand, by item and in total. \\
+\altrow FR-07-14 & Stock movement history & A complete record of every increase and decrease, and what caused it. \\
+FR-07-15 & Cost of goods and margin & Ingredient cost per dish, and therefore gross margin per dish, calculated automatically. \\
+\altrow FR-07-16 & Expiry and batch date tracking & Optional expiry dates on perishable stock, with alerts as items approach their date. \\
+\end{longtable}
+
+% ---------------------------------------------------------
+\modtitle{MODULE 08}{Payments, Refunds \& Reconciliation --- Stripe}
+
+\begin{longtable}{@{}L{0.13\linewidth}L{0.28\linewidth}L{0.52\linewidth}@{}}
+\toprule
+\hdrow \thead{Ref} & \thead{Feature} & \thead{What it means for the business} \\
+\midrule
+\endfirsthead
+\toprule \hdrow \thead{Ref} & \thead{Feature} & \thead{What it means for the business} \\ \midrule
+\endhead
+\bottomrule \endfoot \bottomrule \endlastfoot
+FR-08-01 & Stripe card payments in GBP & Secure card payment at checkout, configured for the UK market. \\
+\altrow FR-08-02 & Strong Customer Authentication & The bank verification step required in the UK and EU is handled automatically, so payments are not declined for compliance reasons. \\
+FR-08-03 & Digital wallets & Apple Pay and Google Pay accepted through Stripe, which materially improves mobile conversion. \\
+\altrow FR-08-04 & Saved payment methods & Returning customers can securely re-use a saved card. Card data is stored by Stripe, never by your system. \\
+FR-08-05 & Guaranteed payment confirmation & Payment confirmation is received directly from Stripe rather than from the customer's browser, so an order is never marked paid in error. \\
+\altrow FR-08-06 & Automatic order--payment matching & Every payment is reconciled to its order automatically, with the Stripe reference recorded. \\
+FR-08-07 & Full and partial refunds & Refunds issued directly from the order screen, with a reason recorded and the customer notified by email. \\
+\altrow FR-08-08 & Refund authority limits & Configurable refund limits per role, so support staff can resolve small issues without exposing the business. \\
+FR-08-09 & Failed payment handling & Clear customer messaging and safe retry on a declined card, with no duplicate orders created. \\
+\altrow FR-08-10 & Payment status visibility & Paid, pending, failed, refunded and partially refunded states shown clearly on every order. \\
+FR-08-11 & Settlement and payout reporting & Reporting on gross takings, Stripe fees, refunds and net payouts for a chosen period. \\
+\altrow FR-08-12 & Cash on delivery (optional) & Can be enabled or disabled per store, with rider cash confirmation and reconciliation. \\
+FR-08-13 & Financial export & Export orders, payments and refunds to spreadsheet format for your accountant. \\
+\end{longtable}
+
+% ---------------------------------------------------------
+\modtitle{MODULE 09}{Notifications \& Email Communications}
+
+\begin{longtable}{@{}L{0.13\linewidth}L{0.28\linewidth}L{0.52\linewidth}@{}}
+\toprule
+\hdrow \thead{Ref} & \thead{Feature} & \thead{What it means for the business} \\
+\midrule
+\endfirsthead
+\toprule \hdrow \thead{Ref} & \thead{Feature} & \thead{What it means for the business} \\ \midrule
+\endhead
+\bottomrule \endfoot \bottomrule \endlastfoot
+FR-09-01 & Branded transactional emails & Every automated email carries your branding, not a generic template. \\
+\altrow FR-09-02 & Order confirmation email & Sent within seconds of payment, with a full itemised receipt and a tracking link. \\
+FR-09-03 & Order status emails & Automatic emails at accepted, preparing, out for delivery and delivered. \\
+\altrow FR-09-04 & Cancellation and refund emails & Clear notification with the reason and the refund amount and timing. \\
+FR-09-05 & Account emails & Welcome, email verification, password reset and account change confirmations. \\
+\altrow FR-09-06 & Internal staff alerts & Email alerts to the right role for new orders, low stock, failed payments and delivery exceptions. \\
+FR-09-07 & Daily summary email & An optional end-of-day trading summary to management. \\
+\altrow FR-09-08 & In-app notification centre & On-screen notifications for staff, with a read/unread state. \\
+FR-09-09 & Marketing consent capture & Explicit, recorded opt-in for marketing email, held separately from transactional email, as UK data protection requires. \\
+\altrow FR-09-10 & Notification preferences & Customers manage which non-essential emails they receive, with a working unsubscribe link. \\
+\end{longtable}
+
+% ---------------------------------------------------------
+\modtitle{MODULE 10}{Sales, Analytics \& Business Intelligence}
+
+\begin{longtable}{@{}L{0.13\linewidth}L{0.28\linewidth}L{0.52\linewidth}@{}}
+\toprule
+\hdrow \thead{Ref} & \thead{Feature} & \thead{What it means for the business} \\
+\midrule
+\endfirsthead
+\toprule \hdrow \thead{Ref} & \thead{Feature} & \thead{What it means for the business} \\ \midrule
+\endhead
+\bottomrule \endfoot \bottomrule \endlastfoot
+FR-10-01 & Executive dashboard & Today's revenue, orders, average order value and live order count on one screen. \\
+\altrow FR-10-02 & Revenue reporting & Revenue by day, week, month and custom date range, with period-on-period comparison. \\
+FR-10-03 & Order analytics & Order volume, order value distribution, delivery versus collection split, and cancellation rate. \\
+\altrow FR-10-04 & Peak-time analysis & Orders by hour and by day of week, so you can staff and prep to actual demand. \\
+FR-10-05 & Product performance & Best and worst selling items by volume and by revenue, with margin per item. \\
+\altrow FR-10-06 & Category performance & Which parts of the menu carry the business and which do not. \\
+FR-10-07 & Customer analytics & New versus returning customers, order frequency, and top customers by value. \\
+\altrow FR-10-08 & Delivery performance & Average preparation time, average delivery time, on-time delivery rate and failed delivery rate. \\
+FR-10-09 & Rider performance & Deliveries per rider, average delivery time and on-time rate. \\
+\altrow FR-10-10 & Stock and waste reporting & Consumption, wastage by reason, stock value and variance from stock counts. \\
+FR-10-11 & Payment and refund reporting & Takings, fees, refunds and net position for any period. \\
+\altrow FR-10-12 & Promotion performance & Redemptions, revenue and discount cost per campaign. \\
+FR-10-13 & Date-range and store filtering & Every report filterable by period and, where relevant, by store. \\
+\altrow FR-10-14 & Export to spreadsheet & Any report exportable to CSV/Excel for your own analysis or your accountant. \\
+FR-10-15 & Visual charts & Clear, readable charts on every report --- not just tables of numbers. \\
+\end{longtable}
+
+% ---------------------------------------------------------
+\modtitle{MODULE 11}{Customer Accounts \& Relationship Management}
+
+\begin{longtable}{@{}L{0.13\linewidth}L{0.28\linewidth}L{0.52\linewidth}@{}}
+\toprule
+\hdrow \thead{Ref} & \thead{Feature} & \thead{What it means for the business} \\
+\midrule
+\endfirsthead
+\toprule \hdrow \thead{Ref} & \thead{Feature} & \thead{What it means for the business} \\ \midrule
+\endhead
+\bottomrule \endfoot \bottomrule \endlastfoot
+FR-11-01 & Customer registration & Self-service account creation with email verification. \\
+\altrow FR-11-02 & Secure sign-in and password reset & Standard, secure authentication with email-based password recovery. \\
+FR-11-03 & Customer profile & Name, contact details and communication preferences, editable by the customer. \\
+\altrow FR-11-04 & Multiple saved addresses & Home, work and other addresses, each validated against the delivery radius. \\
+FR-11-05 & Order history & A complete list of past orders with full detail and receipts. \\
+\altrow FR-11-06 & One-tap reorder & Re-place any previous order in a single action --- one of the strongest drivers of repeat business. \\
+FR-11-07 & Saved cards & Securely stored by Stripe for faster repeat checkout. \\
+\altrow FR-11-08 & Favourites & Customers save preferred dishes for quick access. \\
+FR-11-09 & Ratings and feedback & Post-delivery rating and comment, visible to management. \\
+\altrow FR-11-10 & Admin customer view & Staff can see a customer's full history, addresses and orders when handling a support call. \\
+FR-11-11 & Customer segmentation & Filter customers by spend, frequency and recency to support targeted marketing. \\
+\altrow FR-11-12 & Data rights self-service & Customers can export or request deletion of their data, supporting UK GDPR obligations. \\
+\end{longtable}
+
+% ---------------------------------------------------------
+\modtitle{MODULE 12}{Promotions \& Discounts}
+
+\begin{longtable}{@{}L{0.13\linewidth}L{0.28\linewidth}L{0.52\linewidth}@{}}
+\toprule
+\hdrow \thead{Ref} & \thead{Feature} & \thead{What it means for the business} \\
+\midrule
+\endfirsthead
+\toprule \hdrow \thead{Ref} & \thead{Feature} & \thead{What it means for the business} \\ \midrule
+\endhead
+\bottomrule \endfoot \bottomrule \endlastfoot
+FR-12-01 & Promotion codes & Percentage or fixed-amount discount codes, created and managed by the marketing role. \\
+\altrow FR-12-02 & Usage rules & Minimum spend, first-order-only, one-use-per-customer, total redemption cap and expiry date. \\
+FR-12-03 & Free delivery promotions & Waive the delivery fee under defined conditions. \\
+\altrow FR-12-04 & Scheduled campaigns & Promotions that start and end automatically at set dates and times. \\
+FR-12-05 & Item and category targeting & Restrict a promotion to specific dishes or categories. \\
+\altrow FR-12-06 & Featured and promoted items & Highlight chosen dishes on the storefront. \\
+FR-12-07 & Homepage banners & Managed promotional banners on the customer site. \\
+\altrow FR-12-08 & Migration incentives & First-order discount codes designed specifically to move marketplace customers onto your own platform. \\
+FR-12-09 & Campaign reporting & Redemptions, revenue generated and discount cost per campaign. \\
+\end{longtable}
+
+\clearpage
+% ---------------------------------------------------------
+\modtitle{MODULE 13}{Role-Based Administration \& Super Admin Console}
+
+\begin{longtable}{@{}L{0.13\linewidth}L{0.28\linewidth}L{0.52\linewidth}@{}}
+\toprule
+\hdrow \thead{Ref} & \thead{Feature} & \thead{What it means for the business} \\
+\midrule
+\endfirsthead
+\toprule \hdrow \thead{Ref} & \thead{Feature} & \thead{What it means for the business} \\ \midrule
+\endhead
+\bottomrule \endfoot \bottomrule \endlastfoot
+FR-13-01 & Super Admin console & A single console with authority over every setting, user, permission and record in the platform. \\
+\altrow FR-13-02 & User management & Create, edit, suspend and remove staff accounts, and reset their access. \\
+FR-13-03 & Role management & The thirteen supplied roles, plus the ability to create new custom roles from the permission set. \\
+\altrow FR-13-04 & Granular permission control & Grant or revoke individual permissions on any role without development work. \\
+FR-13-05 & Store scoping & Restrict a user to one store's data, ready for multi-site operation. \\
+\altrow FR-13-06 & System configuration & Delivery radius, fees, tax rates, opening hours, preparation times, order limits and notification rules, all editable in the console. \\
+FR-13-07 & Payment configuration & Stripe settings, refund limits and payment method availability, controlled centrally. \\
+\altrow FR-13-08 & Full audit log & Every significant action recorded with user, timestamp and before/after values --- and not editable by anyone. \\
+FR-13-09 & Order override authority & Ability to amend, cancel, refund or reassign any order, with the reason recorded. \\
+\altrow FR-13-10 & Content management & Static pages such as About, Contact, Terms, Privacy Policy and FAQs, editable without a developer. \\
+FR-13-11 & Emergency controls & A "pause all ordering" switch and a maintenance mode for use during an incident. \\
+\altrow FR-13-12 & Session and access oversight & See who is logged in and force a sign-out where necessary. \\
+FR-13-13 & Data export & Export orders, customers, stock and financial data at any time --- your data remains yours. \\
+\end{longtable}
+
+% ---------------------------------------------------------
+\modtitle{MODULE 14}{Security, Compliance \& Data Protection}
+
+\begin{longtable}{@{}L{0.13\linewidth}L{0.28\linewidth}L{0.52\linewidth}@{}}
+\toprule
+\hdrow \thead{Ref} & \thead{Feature} & \thead{What it means for the business} \\
+\midrule
+\endfirsthead
+\toprule \hdrow \thead{Ref} & \thead{Feature} & \thead{What it means for the business} \\ \midrule
+\endhead
+\bottomrule \endfoot \bottomrule \endlastfoot
+FR-14-01 & Encrypted connections throughout & All traffic secured by HTTPS with a valid certificate. \\
+\altrow FR-14-02 & Card data never held by you & Card details are captured and stored by Stripe. Your platform never sees or stores a card number, which keeps your PCI obligations at the lowest tier. \\
+FR-14-03 & Secure password handling & Passwords are stored using industry-standard irreversible hashing and are never recoverable in plain text. \\
+\altrow FR-14-04 & Protection against common attacks & Defences against the standard web attack classes, plus rate limiting on sign-in and checkout. \\
+FR-14-05 & UK GDPR alignment & Lawful basis for processing, explicit marketing consent, data export and deletion on request, and a documented retention position. \\
+\altrow FR-14-06 & Privacy policy and cookie notice & Published policies and a compliant cookie consent banner on the customer site. \\
+FR-14-07 & Allergen information support & Structured allergen data per item, supporting the information duties that apply to UK food businesses. \\
+\altrow FR-14-08 & Role-based data minimisation & Staff see only the customer data their role requires --- riders, for example, do not see payment information. \\
+FR-14-09 & Automated database backups & Scheduled backups with a documented restore procedure, tested before handover. \\
+\altrow FR-14-10 & Audit trail for accountability & A permanent record of who did what and when, for dispute resolution and internal control. \\
+\end{longtable}
+
+\vspace{4pt}
+\begin{warnbox}
+\textbf{An important legal boundary.} We build the platform to support your compliance
+obligations --- consent capture, data export, deletion, allergen fields, audit trails
+and secure payment handling. We are not a law firm and we do not provide legal advice.
+\textbf{Final responsibility for UK GDPR registration, your privacy policy wording, food
+hygiene compliance and the accuracy of your published allergen data rests with you.} We
+strongly recommend your own legal or compliance review before go-live, and we will
+support that review at no additional cost.
+\end{warnbox}
+
+% ---------------------------------------------------------
+\modtitle{MODULE 15}{Design, Interface \& Experience Standards}
+
+\begin{longtable}{@{}L{0.13\linewidth}L{0.28\linewidth}L{0.52\linewidth}@{}}
+\toprule
+\hdrow \thead{Ref} & \thead{Feature} & \thead{What it means for the business} \\
+\midrule
+\endfirsthead
+\toprule \hdrow \thead{Ref} & \thead{Feature} & \thead{What it means for the business} \\ \midrule
+\endhead
+\bottomrule \endfoot \bottomrule \endlastfoot
+FR-15-01 & Bespoke visual design & A custom-designed interface built around your brand --- not a purchased template with your logo dropped in. \\
+\altrow FR-15-02 & Design system & A consistent set of colours, type, spacing and components used across every screen, so the platform feels like one product. \\
+FR-15-03 & Motion and micro-interaction & Considered animation and transitions that make the interface feel responsive and premium, applied deliberately rather than decoratively. \\
+\altrow FR-15-04 & Mobile-first & Designed for the phone first, because that is where the overwhelming majority of food orders are placed. \\
+FR-15-05 & Speed as a feature & Fast page loads and optimised images. Slow checkouts lose orders, so performance is treated as a requirement, not a nicety. \\
+\altrow FR-15-06 & Accessibility & Readable contrast, keyboard navigation, sensible focus order and screen-reader labelling, targeting WCAG 2.1 AA as a working standard. \\
+FR-15-07 & Cross-browser support & Verified on current versions of Chrome, Safari, Firefox and Edge, on desktop and mobile. \\
+\altrow FR-15-08 & Operational screens designed for use & Kitchen, dispatch and rider screens designed for speed and legibility under pressure, not for looking good in a screenshot. \\
+FR-15-09 & Clear empty and error states & Every screen behaves sensibly when there is no data, and every error tells the user what to do next. \\
+\altrow FR-15-10 & Search-engine fundamentals & Clean page structure, metadata and sitemap so your own site can be found --- the foundation for reducing marketplace dependence. \\
+\end{longtable}
+
+\clearpage
+
+% ============================================================
+\section{Technology Foundation}
+% ============================================================
+
+This section is included for completeness and for any technical adviser you may consult.
+It is not required reading for the commercial decision.
+
+\begin{tabularx}{\linewidth}{@{}L{0.26\linewidth}L{0.24\linewidth}Y@{}}
+\toprule
+\hdrow \thead{Layer} & \thead{Technology} & \thead{Why it was chosen} \\
+\midrule
+Customer \& admin web & \textbf{Next.js} with \textbf{React} & Fast page loads, excellent
+mobile performance and strong search-engine behaviour --- the three things that decide
+whether a food-ordering site converts. \\
+\altrow Interface motion & \textbf{Framer Motion} & Smooth, controlled animation and
+transitions that give the platform a premium feel without harming performance. \\
+Application server & \textbf{Django} (Python) & A mature, secure framework with proven
+strength in permission systems, administrative interfaces and business-rule-heavy
+applications. \\
+\altrow Database & \textbf{PostgreSQL} & Reliable, transactional and well suited to
+inventory and financial data where correctness cannot be traded for speed. \\
+Payments & \textbf{Stripe} & The UK standard for card payments, with built-in Strong
+Customer Authentication and no card data held on your systems. \\
+\altrow Location services & \textbf{Google Maps Platform} & Address validation,
+geocoding, distance calculation and mapping --- the engine behind the 7-mile radius and
+live tracking. \\
+Real-time updates & \textbf{WebSocket-based live channels} & The mechanism that lets order
+boards, kitchen screens and customer tracking update by themselves. \\
+\altrow Email & Transactional email service & Reliable, monitored delivery of receipts
+and status notifications. \\
+Hosting & Managed cloud platform & Deployed on managed cloud infrastructure with
+automated backups and monitoring. \\
+\bottomrule
+\end{tabularx}
+
+\vspace{8pt}
+\begin{keybox}
+\textbf{Why this matters commercially.} This is the stack both engineers on this project
+use daily and have shipped in production repeatedly. No part of this engagement involves
+learning a new technology at your expense. That is the principal reason a 45-day
+delivery window is a commitment rather than an aspiration.
+\end{keybox}
+
+\clearpage
+% ============================================================
+\section{Project Plan \& Delivery Timeline}
+% ============================================================
+
+\textbf{Total duration: 45 calendar days}, commencing on the \textbf{Project Start Date}
+--- defined as the first working day after written confirmation of this proposal
+\emph{and} receipt of the initial payment, whichever is later.
+
+\subsection{Phased delivery schedule}
+
+\begin{longtable}{@{}L{0.09\linewidth}L{0.30\linewidth}L{0.42\linewidth}L{0.11\linewidth}@{}}
+\toprule
+\hdrow \thead{Days} & \thead{Phase} & \thead{What is delivered} & \thead{Your input} \\
+\midrule
+\endfirsthead
+\toprule \hdrow \thead{Days} & \thead{Phase} & \thead{What is delivered} & \thead{Your input} \\ \midrule
+\endhead
+\bottomrule \endfoot \bottomrule \endlastfoot
+
+\textbf{1--5} & \textbf{Phase 0}\newline Discovery \& Design & Requirements workshop, confirmed
+scope baseline, brand and design direction, screen designs for the key customer and admin
+journeys, and the delivery-zone configuration. & \textbf{Required}\newline Design sign-off \\
+
+\altrow \textbf{6--13} & \textbf{Phase 1}\newline Foundation \& Access Control & Core data
+structure, secure authentication, all thirteen roles, the granular permission system, the
+Super Admin console shell and the audit log. & Review \\
+
+\textbf{14--21} & \textbf{Phase 2}\newline Catalogue \& Inventory & Full menu and catalogue
+management, modifiers and variants, pricing and tax configuration, and the complete
+inventory, recipe, stock-movement and supplier module. & \textbf{Required}\newline Menu \& stock data \\
+
+\altrow \textbf{22--30} & \textbf{Phase 3}\newline Ordering, Payments \& Zone Engine & The
+customer storefront, basket and checkout, the 7-mile delivery-radius engine, Stripe
+payments end to end, refunds, and customer accounts. & \textbf{Required}\newline Mid-project demo sign-off \\
+
+\textbf{31--37} & \textbf{Phase 4}\newline Real-Time Operations & Live order tracking, the
+kitchen display, the dispatch board, the rider workspace, live location on the map,
+proof of delivery, and the full email notification suite. & Review \\
+
+\altrow \textbf{38--41} & \textbf{Phase 5}\newline Analytics \& Hardening & All reporting and
+analytics dashboards, promotions, exports, security hardening, performance tuning and
+full cross-browser and cross-device testing. & Review \\
+
+\textbf{42--45} & \textbf{Phase 6}\newline UAT, Launch \& Handover & Your acceptance testing,
+defect resolution, production deployment, live-data configuration, staff training
+sessions, documentation handover and go-live. & \textbf{Required}\newline UAT \& final sign-off \\
+
+\end{longtable}
+
+\subsection{Governance during delivery}
+
+\begin{itemize}
+\item \textbf{Weekly written progress report}, every Friday, covering what was completed,
+what is next, and anything that is blocked.
+\item \textbf{Three formal demonstrations} --- at the end of Phase~0 (designs), Phase~3
+(ordering and payments working end to end) and Phase~6 (final acceptance).
+\item \textbf{A shared environment} available from Phase~2 onward, so you can see and use
+the platform as it is built rather than only at the end.
+\item \textbf{A single named point of contact} for the engagement, so you are never
+routed between people.
+\end{itemize}
+
+\begin{warnbox}
+\textbf{The timeline depends on you as well as on us.} Four checkpoints in the table
+above are marked \textbf{Required}. If a required sign-off, or the menu and stock data,
+is delayed, the delivery date moves by the length of that delay. We will flag any such
+delay in writing on the day it occurs rather than absorbing it silently and reporting a
+missed date at the end. Please nominate one decision-maker with authority to sign off ---
+review by committee is the single most common cause of a slipped delivery date.
+\end{warnbox}
+
+\clearpage
+
+% ============================================================
+\section{Quality Assurance, Testing \& Acceptance}
+% ============================================================
+
+\subsection{How quality is assured}
+
+\begin{tabularx}{\linewidth}{@{}L{0.30\linewidth}Y@{}}
+\toprule
+\hdrow \thead{Activity} & \thead{What we do} \\
+\midrule
+Automated testing & Automated tests covering the business-critical paths: pricing
+calculation, stock deduction, delivery-radius decisions, payment handling and permission
+enforcement. \\
+\altrow Functional testing & Every requirement in Section~7 tested against its stated
+behaviour before it is presented to you. \\
+Cross-device testing & Verified on iPhone and Android phones, tablet and desktop, at
+the screen sizes your customers actually use. \\
+\altrow Cross-browser testing & Verified on current Chrome, Safari, Firefox and Edge. \\
+Payment testing & Full Stripe test-mode coverage: successful payments, declines,
+authentication challenges, partial and full refunds, and duplicate-submission protection. \\
+\altrow Permission testing & Each of the thirteen roles tested to confirm it can reach
+what it should and cannot reach what it should not. \\
+Load sanity testing & The platform is exercised at a realistic multiple of your expected
+peak concurrent order volume. \\
+\altrow Security review & Review against the standard web application risk categories,
+plus rate limiting and secure configuration checks before go-live. \\
+Backup and restore & A backup is taken and restored successfully before handover ---
+an untested backup is not a backup. \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Acceptance process}
+
+\begin{enumerate}[leftmargin=17pt]
+\item At Phase~6 we provide a \textbf{User Acceptance Testing pack} listing every
+requirement from Section~7 with the steps to verify it.
+\item You test the platform against that pack over the UAT window and record any defect
+against its requirement reference.
+\item \textbf{Any defect --- that is, any behaviour that does not match this document ---
+is fixed at no charge}, both during UAT and throughout the 60-day support period.
+\item A request for behaviour that this document does not describe is a
+\textbf{change request}, handled under Section~16.
+\item Written acceptance, or 7 calendar days of live commercial use without a raised
+defect, constitutes acceptance.
+\end{enumerate}
+
+\subsection{What you receive at handover}
+
+\begin{itemize}
+\item The complete, working platform deployed and live on your own domain.
+\item \textbf{Full ownership of the source code}, transferred to you on final payment.
+\item Administrator and staff user guides written in plain language.
+\item Recorded training sessions for each major role.
+\item Deployment, configuration and backup/restore documentation.
+\item All accounts and credentials --- hosting, Stripe, Google Maps, domain, email ---
+held in your name, not ours.
+\end{itemize}
+
+\begin{keybox}
+\textbf{No lock-in.} Every account is registered in your name and the code is yours.
+If you choose to move to another development team after this engagement, you can, and
+nothing in this platform is designed to make that difficult. We would rather earn the
+next piece of work than trap it.
+\end{keybox}
+
+\clearpage
+
+% ============================================================
+\section{What We Need From You}
+% ============================================================
+
+The 45-day timeline assumes the following are provided promptly. Each item is listed
+with when it is needed.
+
+\begin{longtable}{@{}L{0.28\linewidth}L{0.50\linewidth}L{0.16\linewidth}@{}}
+\toprule
+\hdrow \thead{What} & \thead{Detail} & \thead{Needed by} \\
+\midrule
+\endfirsthead
+\toprule \hdrow \thead{What} & \thead{Detail} & \thead{Needed by} \\ \midrule
+\endhead
+\bottomrule \endfoot \bottomrule \endlastfoot
+\textbf{A single decision-maker} & One named person with authority to approve designs, scope
+and acceptance. & Day 1 \\
+\altrow \textbf{Brand assets} & Logo files, brand colours, fonts and any existing brand
+guidelines. If none exist, we will propose a direction. & Day 3 \\
+\textbf{Menu data} & Full menu: categories, dish names, descriptions, prices, sizes,
+options and allergen information, in a spreadsheet. & Day 12 \\
+\altrow \textbf{Food photography} & Images for menu items. If you do not have them, we
+will advise on the most cost-effective route --- \textbf{photography is not included in
+this quotation}. & Day 14 \\
+\textbf{Stock data} & Ingredient list with units, cost prices, suppliers and, ideally,
+recipes for the main dishes. & Day 16 \\
+\altrow \textbf{Operational parameters} & Trading hours, preparation times, delivery fee
+bands, minimum order values and the store's exact address. & Day 10 \\
+\textbf{Stripe account} & A UK Stripe account in your business name, fully verified.
+Verification can take several days --- please start early. & Day 18 \\
+\altrow \textbf{Google Cloud account} & For the Maps Platform API, with billing enabled
+in your name. We will guide the setup. & Day 18 \\
+\textbf{Domain access} & The domain you will trade on, with the ability to change DNS
+records. & Day 35 \\
+\altrow \textbf{Legal documents} & Your terms and conditions, privacy policy and refund
+policy. We provide the structure; the wording must be yours or your solicitor's. & Day 38 \\
+\textbf{UAT participation} & Named staff available to test the platform during Days
+42--45. & Day 42 \\
+\altrow \textbf{Staff availability for training} & Two hours per role group for training
+sessions. & Day 44 \\
+\end{longtable}
+
+\begin{warnbox}
+\textbf{The two items most likely to delay you.} In our experience the two things that
+most often hold up a launch of this kind are (1) \textbf{Stripe account verification},
+which is outside anyone's control and can take a week or more, and (2) \textbf{menu and
+food photography}. Please start both in week one, not week five.
+\end{warnbox}
+
+\clearpage
+% ============================================================
+\section{Commercials \& Payment Terms}
+% ============================================================
+
+\subsection{Investment}
+
+\begin{tcolorbox}[enhanced,colback=brandnavy,colframe=brandnavy,boxrule=0pt,arc=0pt,
+  outer arc=0pt,left=18pt,right=18pt,top=14pt,bottom=14pt]
+\begin{tabularx}{\linewidth}{@{}Y r@{}}
+{\color{white}\sffamily\large Total fixed project fee} &
+{\color{white}\sffamily\bfseries\fontsize{27}{30}\selectfont \INR{94{,}999}} \\[2pt]
+{\color{white!70}\sffamily\small All-inclusive. No hourly billing. No hidden extras.} &
+{\color{brandaccent}\sffamily\small $\approx$\GBP{888} indicative} \\
+\end{tabularx}
+\end{tcolorbox}
+
+\vspace{4pt}
+{\color{brandgrey}\footnotesize The GBP figure is indicative only, converted at
+\INR{107} = \GBP{1}. The contracted amount is the Indian Rupee figure. If you would
+prefer to contract and settle in GBP at a fixed rate, please tell us before sign-off and
+we will re-issue the commercial section accordingly.}
+
+\subsection{What the fee includes}
+
+\begin{tabularx}{\linewidth}{@{}C{0.06\linewidth}Y@{}}
+\toprule
+\hdrow \thead{} & \thead{Included in the fixed fee} \\
+\midrule
+\checkmark & Complete discovery, requirements definition and scope baselining \\
+\altrow \checkmark & Bespoke UI/UX design for every customer, staff and administrative screen \\
+\checkmark & Full development of all fifteen modules and every requirement in Section~7 \\
+\altrow \checkmark & All thirteen roles with granular, configurable permissions \\
+\checkmark & Stripe payment integration, tested end to end including refunds \\
+\altrow \checkmark & Google Maps integration for the 7-mile delivery radius and live tracking \\
+\checkmark & Real-time order tracking and live operational dashboards \\
+\altrow \checkmark & The complete inventory, stock, recipe and supplier module \\
+\checkmark & All reporting, analytics and data exports \\
+\altrow \checkmark & Full testing --- functional, cross-browser, cross-device, payment and security \\
+\checkmark & Production deployment and go-live configuration \\
+\altrow \checkmark & Staff training and recorded training sessions \\
+\checkmark & Administrator and user documentation \\
+\altrow \checkmark & \textbf{All cloud and infrastructure costs during the 45-day development period} \\
+\checkmark & \textbf{One month of post-launch cloud hosting, complimentary} \\
+\altrow \checkmark & \textbf{60 days of pre- and post-launch support} \\
+\checkmark & \textbf{Full transfer of source code ownership} on final payment \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Payment schedule}
+
+\begin{tabularx}{\linewidth}{@{}C{0.09\linewidth}L{0.30\linewidth}C{0.17\linewidth}Y@{}}
+\toprule
+\hdrow \thead{Stage} & \thead{Trigger} & \thead{Amount} & \thead{Share} \\
+\midrule
+1 & On written confirmation of this proposal (Project Start) & \INR{38{,}000} & 40\% \\
+\altrow 2 & On acceptance of the Phase~3 demonstration (Day 30) --- ordering and payments working end to end & \INR{28{,}500} & 30\% \\
+3 & On go-live and final acceptance (Day 45) & \INR{28{,}499} & 30\% \\
+\midrule
+\rowcolor{brandlight} & \textbf{Total} & \textbf{\INR{94{,}999}} & \textbf{100\%} \\
+\bottomrule
+\end{tabularx}
+
+\vspace{6pt}
+\begin{itemize}
+\item Invoices are payable within \textbf{7 calendar days} of issue.
+\item Source code ownership transfers to you on receipt of the final payment.
+\item This payment schedule is our proposal and is open to discussion before sign-off.
+\end{itemize}
+
+\subsection{Cloud and infrastructure costs}
+
+\begin{tabularx}{\linewidth}{@{}L{0.34\linewidth}L{0.24\linewidth}Y@{}}
+\toprule
+\hdrow \thead{Period} & \thead{Who pays} & \thead{Notes} \\
+\midrule
+During development (Days 1--45) & \textbf{We do} & All development, staging and testing
+infrastructure is at our cost. You are billed nothing. \\
+\altrow First month after go-live & \textbf{We do --- complimentary} & Provided free as part
+of this engagement. \\
+From month two onward & You do & Indicatively \GBP{50}--\GBP{150} per month at launch
+volumes, excluding Stripe transaction fees. Accounts are in your name so you control and
+can audit the spend. \\
+\bottomrule
+\end{tabularx}
+
+\vspace{6pt}
+{\color{brandgrey}\footnotesize Third-party charges that are inherently
+usage-based --- Stripe transaction fees, Google Maps API usage above the free
+allowance, and email volume above free-tier limits --- are billed by those providers
+directly to your accounts at all times, including during development.}
+
+\clearpage
+
+% ============================================================
+\section{Out of Scope --- Chargeable Items}
+% ============================================================
+
+\begin{accentbox}
+\textbf{This section carries the same commercial weight as the feature list.} The items
+below are \textbf{not} included in the \INR{94{,}999} fee. They are listed explicitly so
+that there is no ambiguity later. Several of them are things clients frequently assume
+are included --- please read the list rather than skim it.
+
+\textbf{Any feature, screen, integration or behaviour not described in Section~7 of this
+document will be quoted separately as a change request once development has started.}
+\end{accentbox}
+
+\subsection{Explicitly excluded from this engagement}
+
+\begin{tabularx}{\linewidth}{@{}C{0.06\linewidth}L{0.32\linewidth}Y@{}}
+\toprule
+\hdrow \thead{} & \thead{Excluded item} & \thead{Note} \\
+\midrule
+1 & Native iOS and Android applications & This is a web platform. It works
+excellently on mobile browsers, but no App Store or Play Store application is included. \\
+\altrow 2 & Marketplace integrations & No menu synchronisation or order ingestion from
+Uber Eats, Deliveroo or Just Eat. \\
+3 & EPOS / till system integration & No integration with in-store point-of-sale
+hardware or software. \\
+\altrow 4 & Accounting software integration & No Xero, QuickBooks or Sage integration. \\
+5 & SMS and WhatsApp notifications & Email notifications are included; SMS and WhatsApp
+messaging are not, and would carry their own per-message costs. \\
+\altrow 6 & Loyalty points and referral schemes & Promotion codes and discounts are
+included; a points-based loyalty programme is not. \\
+7 & Table booking and dine-in ordering & The platform covers delivery and collection only. \\
+\altrow 8 & Multi-language and multi-currency & Delivered in English and GBP. \\
+9 & AI or machine-learning features & No demand forecasting, dynamic pricing or automated
+route optimisation. Dispatch assignment is manual with proximity-based suggestions. \\
+\altrow 10 & Rider payroll, scheduling and HR & Rider performance is reported; wage
+calculation and rota management are not included. \\
+11 & Food photography, copywriting and brand identity creation & We design the platform;
+we do not produce photographs, write your menu descriptions, or create a logo from scratch. \\
+\altrow 12 & Marketing services & No SEO campaigns, paid advertising, social media
+management or email marketing execution. \\
+13 & Third-party courier integration & The platform is built for your in-house fleet. \\
+\altrow 14 & White-label or multi-tenant resale & A single business, ready for additional
+stores. Not a platform you can resell to other restaurants. \\
+15 & Historical data migration & No import of past orders or customer records from an
+existing system. \\
+\altrow 16 & Ongoing hosting and maintenance beyond the stated periods & After the
+complimentary month and the 60-day support window, ongoing support is a separate
+arrangement. \\
+17 & Legal, accounting and compliance advice & We build to support compliance; we do
+not advise on it. \\
+\altrow 18 & Custom hardware & No kitchen printers, tablets, terminals or scanners
+supplied or integrated beyond standard browser printing. \\
+\bottomrule
+\end{tabularx}
+
+\vspace{8pt}
+\begin{keybox}
+\textbf{If you need any of the above, say so now.} Several items --- SMS notifications
+and a loyalty scheme in particular --- are far cheaper to include in the original build
+than to add afterwards. Tell us before sign-off and we will re-quote the whole package
+rather than charge you a premium for it later. Section~16 sets out how items raised
+\emph{after} development starts are handled.
+\end{keybox}
+
+\clearpage
+% ============================================================
+\section{Assumptions, Dependencies \& Risk Register}
+% ============================================================
+
+\subsection{Assumptions this proposal is built on}
+
+\begin{enumerate}[leftmargin=17pt]
+\item A \textbf{single store} at launch, with the platform architected so that further
+stores can be added later as a chargeable extension.
+\item Delivery is by \textbf{your own riders}. No third-party courier network is involved.
+\item Trading is in \textbf{GBP}, in \textbf{English}, for the \textbf{UK market}.
+\item The platform is \textbf{new}, with no legacy system to integrate with or migrate
+data from.
+\item Menu and stock data will be supplied by you in a structured, usable form.
+\item Expected launch volume is within a normal independent-operator range. Requirements
+materially beyond that would need a separate infrastructure conversation.
+\item Design feedback is consolidated into \textbf{a maximum of two rounds per phase} by
+a single decision-maker.
+\item Stripe and Google Cloud accounts are opened in your business name and verified by
+the dates in Section~11.
+\end{enumerate}
+
+\subsection{Risk register}
+
+\begin{longtable}{@{}L{0.26\linewidth}C{0.10\linewidth}L{0.28\linewidth}L{0.26\linewidth}@{}}
+\toprule
+\hdrow \thead{Risk} & \thead{Impact} & \thead{Why it matters} & \thead{How we mitigate it} \\
+\midrule
+\endfirsthead
+\toprule \hdrow \thead{Risk} & \thead{Impact} & \thead{Why it matters} & \thead{How we mitigate it} \\ \midrule
+\endhead
+\bottomrule \endfoot \bottomrule \endlastfoot
+
+Delayed Stripe verification & \textbf{High} & Payments cannot be tested live, blocking
+Phase~3 acceptance. & Flagged as a Day-18 dependency; we will start the process with you
+in week one and can build against Stripe test mode meanwhile. \\
+
+\altrow Late or incomplete menu / stock data & \textbf{High} & Phase~2 cannot complete,
+and every later phase shifts. & Template spreadsheets supplied on Day~1; weekly written
+escalation if data is outstanding. \\
+
+Scope expansion during build & \textbf{High} & The single most common cause of missed
+delivery dates in projects of this type. & An explicit requirement list (Section~7), an
+explicit exclusion list (Section~13) and a formal change procedure (Section~16). \\
+
+\altrow Review by committee & \textbf{Medium} & Conflicting feedback from multiple
+stakeholders stalls sign-off. & A single named decision-maker is a stated condition of
+the timeline. \\
+
+Missing food photography & \textbf{Medium} & A menu without images converts materially
+worse. & Raised at Day~14; we will advise on low-cost options, but production is not in
+scope. \\
+
+\altrow Google Maps API cost at high volume & \textbf{Low} & Usage-based charges scale
+with order volume. & Address lookups are cached and geocoding calls minimised by design;
+usage is visible in your own Google account. \\
+
+Underestimating customer migration effort & \textbf{Medium} & The ROI in Section~4
+depends on customers actually moving to your platform. & Migration tooling is built in
+(FR-12-08), and we will provide a practical migration checklist at handover ---
+but execution is yours. \\
+
+\altrow Support window versus UK trading hours & \textbf{Medium} & The standard support
+window does not overlap London evening service. & Addressed explicitly in Section~15.3.
+Please read that section and confirm you are comfortable with it. \\
+
+\end{longtable}
+
+\clearpage
+
+% ============================================================
+\section{Support \& Service Levels}
+% ============================================================
+
+\subsection{Support period}
+
+\textbf{60 days of pre-launch and post-launch support} is included in the fixed fee.
+This period covers the run-up to go-live and the critical first weeks of live trading.
+
+\begin{tabularx}{\linewidth}{@{}L{0.34\linewidth}Y@{}}
+\toprule
+\hdrow \thead{What is covered} & \thead{Detail} \\
+\midrule
+Defect resolution & Any behaviour that does not match this document is fixed at no
+charge, for the full 60 days. \\
+\altrow Configuration assistance & Help with delivery zones, fees, menus, pricing, roles
+and system settings. \\
+Deployment support & Assistance with go-live, DNS, domain and account configuration. \\
+\altrow Additional training & Follow-up sessions for new or existing staff during the period. \\
+Operational guidance & Practical help interpreting reports and using the platform to run
+the business. \\
+\altrow Monitoring & We watch for errors and performance issues during the period and act
+on them proactively. \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Support channels and response targets}
+
+\begin{tabularx}{\linewidth}{@{}L{0.16\linewidth}L{0.36\linewidth}C{0.19\linewidth}Y@{}}
+\toprule
+\hdrow \thead{Priority} & \thead{Definition} & \thead{Response} & \thead{Target resolution} \\
+\midrule
+\textbf{P1 --- Critical} & The platform is down, or customers cannot place orders or pay. &
+Within \textbf{2 working hours} & Same working day \\
+\altrow \textbf{P2 --- High} & A major function is broken but a workaround exists. &
+Within \textbf{4 working hours} & 1--2 working days \\
+\textbf{P3 --- Medium} & A minor defect or an inconvenience. &
+Within \textbf{1 working day} & 3--5 working days \\
+\altrow \textbf{P4 --- Low} & A question, a cosmetic issue or a configuration request. &
+Within \textbf{2 working days} & By agreement \\
+\bottomrule
+\end{tabularx}
+
+\vspace{6pt}
+\textbf{Channels:} telephone and chat, on the numbers listed in Section~18, plus email
+for anything that needs a written record.
+
+\subsection{Support hours --- please read carefully}
+
+\begin{tcolorbox}[enhanced,colback=brandlight,colframe=brandnavy,boxrule=0pt,leftrule=3pt,
+  arc=0pt,outer arc=0pt,left=12pt,right=12pt,top=10pt,bottom=10pt]
+\textbf{Standard support hours: Monday to Friday, 10:00--18:00 IST.}
+
+\vspace{4pt}
+Our team is based in India. Converted to United Kingdom local time, the standard support
+window is:
+
+\vspace{2pt}
+\begin{tabularx}{\linewidth}{@{}L{0.34\linewidth}Y@{}}
+\textbf{British Summer Time (BST)} & 05:30 -- 13:30 UK time \\
+\textbf{Greenwich Mean Time (GMT)} & 04:30 -- 12:30 UK time \\
+\end{tabularx}
+
+\vspace{6pt}
+\textbf{We are drawing your attention to this deliberately.} This window covers your
+morning and early afternoon, but it does \emph{not} cover the London evening dinner
+service, which is when a food delivery business is busiest and when an incident would be
+most damaging.
+
+\vspace{4pt}
+Accordingly, for the duration of the 60-day support period we additionally commit to
+\textbf{best-effort P1 (critical) response outside the standard window, covering UK
+trading hours up to 22:00 UK time, seven days a week}. P2, P3 and P4 items are handled
+within the standard window only.
+
+\vspace{4pt}
+If you require \textbf{guaranteed} (rather than best-effort) evening and weekend cover,
+tell us before sign-off and we will quote an extended support arrangement. We would
+rather price that properly than promise it informally and let you down during a Friday
+night service.
+\end{tcolorbox}
+
+\subsection{After the 60-day period}
+
+Continued support is available under a separate, optional arrangement. There is no
+obligation to take it --- you own the code and the accounts, and you are free to
+maintain the platform yourself or with any other team. If you would like an ongoing
+support and maintenance quotation, we are happy to provide one closer to the end of the
+included period, once we both know what the platform's real operating profile looks like.
+
+\clearpage
+
+% ============================================================
+\section{Change Control Procedure}
+% ============================================================
+
+\begin{accentbox}
+\textbf{Stated plainly, as agreed:} \emph{any new feature beyond what is described in
+this document will be chargeable once development has started.}
+\end{accentbox}
+
+This is not a mechanism for adding cost --- it is the mechanism that protects your
+delivery date and your fixed price. Uncontrolled additions are the reason fixed-price
+software projects overrun, and the client always pays for that overrun one way or
+another. A clear procedure is the fairer arrangement for both sides.
+
+\subsection{Before development starts --- free of charge}
+
+Until the Project Start Date, \textbf{scope changes cost you nothing}. Read Section~7 and
+Section~13 now, discuss them internally, and come back with anything missing. We will
+revise this document and re-quote the whole package at no charge, as many times as
+needed. This is the moment to be demanding.
+
+\subsection{After development starts}
+
+\begin{enumerate}[leftmargin=17pt]
+\item You raise the request in writing, referencing the relevant module or requirement.
+\item Within \textbf{2 working days} we respond with a written impact assessment covering
+the additional effort, the cost, the effect on the delivery date, and any knock-on effect
+on already-completed work.
+\item You approve or decline in writing. \textbf{No work begins and no charge arises
+without your written approval.}
+\item Approved changes are added to the plan, and the revised delivery date --- if any ---
+is confirmed in writing.
+\end{enumerate}
+
+\subsection{What is never charged as a change}
+
+To be unambiguous, the following are always fixed at no cost:
+
+\begin{itemize}
+\item \textbf{Any defect} --- anything that does not behave as this document describes.
+\item \textbf{Clarification} of a requirement that is genuinely ambiguous in this
+document. Where the wording is unclear, the interpretation more favourable to you applies.
+\item \textbf{Content and configuration changes} --- menu items, prices, delivery fees,
+opening hours, staff accounts, promotions. These are all things you control yourself
+through the admin console, by design.
+\item \textbf{Design refinement within the agreed two rounds per phase.}
+\end{itemize}
+
+\subsection{Indicative rate for additional work}
+
+Change requests are quoted per item against the effort involved. Where you would prefer a
+time-based arrangement, an indicative rate can be agreed in writing at sign-off. Small
+changes raised during the 60-day support period that take under an hour are absorbed at
+our discretion and at no charge --- we do not intend to invoice you for fifteen minutes
+of work.
+
+\clearpage
+% ============================================================
+\section{Acceptance \& Sign-Off}
+% ============================================================
+
+\subsection{Summary of the offer}
+
+\begin{tabularx}{\linewidth}{@{}L{0.34\linewidth}Y@{}}
+\toprule
+\hdrow \thead{Item} & \thead{Commitment} \\
+\midrule
+\textbf{Scope} & The fifteen modules and every numbered requirement in Section~7 \\
+\altrow \textbf{Roles} & Thirteen operational roles with granular permissions, under full
+Super Admin control \\
+\textbf{Delivery radius} & 7 miles, configurable, enforced automatically at checkout \\
+\altrow \textbf{Payments} & Stripe, GBP, UK-configured, including refunds and reconciliation \\
+\textbf{Timeline} & \textbf{45 calendar days} from the Project Start Date \\
+\altrow \textbf{Fixed fee} & \textbf{\INR{94{,}999}} --- all inclusive \\
+\textbf{Payment schedule} & 40\% on confirmation, 30\% at Day 30, 30\% at go-live \\
+\altrow \textbf{Cloud costs} & Development costs borne by us; first post-launch month complimentary \\
+\textbf{Support} & 60 days pre- and post-launch, Mon--Fri 10:00--18:00 IST, with
+best-effort critical cover to 22:00 UK time \\
+\altrow \textbf{Code ownership} & Transferred to you in full on final payment \\
+\textbf{Validity} & This offer is open for \textbf{30 days} from the date of issue \\
+\bottomrule
+\end{tabularx}
+
+\vspace{8pt}
+\begin{accentbox}
+\textbf{Acknowledgement of the change-control term.} By signing below you confirm that
+you have read Section~7 (Feature \& Requirements Specification) and Section~13 (Out of
+Scope), and that you understand that \textbf{any feature not described in this document
+will be chargeable once development has started}, under the procedure set out in
+Section~16.
+\end{accentbox}
+
+\subsection{To proceed}
+
+\begin{enumerate}[leftmargin=17pt]
+\item Review Sections~7 and~13 and raise anything missing --- \textbf{at no cost}, before
+sign-off.
+\item Confirm the payment schedule in Section~12.3, or propose an alternative.
+\item Confirm you are comfortable with the support window in Section~15.3, or ask us to
+quote extended cover.
+\item Sign below and return this document.
+\item Settle the initial invoice. The 45-day clock starts the next working day.
+\end{enumerate}
+
+\vspace{16pt}
+
+\begin{tabularx}{\linewidth}{@{}L{0.46\linewidth}L{0.06\linewidth}Y@{}}
+\toprule
+\hdrow \thead{For the Client} & & \thead{For the Delivery Team} \\
+\midrule
+\rule{0pt}{40pt}\hrulefill & & \rule{0pt}{40pt}\hrulefill \\[-6pt]
+Signature & & Signature \\[10pt]
+\hrulefill & & \hrulefill \\[-6pt]
+Name & & Name \\[10pt]
+\hrulefill & & \hrulefill \\[-6pt]
+Position & & Position \\[10pt]
+\hrulefill & & \hrulefill \\[-6pt]
+Date & & Date \\
+\bottomrule
+\end{tabularx}
+
+\vspace{10pt}
+{\color{brandgrey}\footnotesize
+This document constitutes a commercial proposal and statement of work. It is not a
+contract until signed by both parties. On signature it forms the agreed scope baseline
+for the engagement, and takes precedence over any prior verbal or written discussion of
+scope, price or timeline.}
+
+\clearpage
+
+% ============================================================
+\section{Your Delivery Team}
+% ============================================================
+
+This is a two-person engagement. You will work directly with the people building the
+platform --- there is no account manager between you and the engineers, and no work is
+subcontracted.
+
+\vspace{10pt}
+
+\begin{tcolorbox}[enhanced,colback=brandlight,colframe=brandnavy,boxrule=0pt,leftrule=3.5pt,
+  arc=0pt,outer arc=0pt,left=16pt,right=16pt,top=13pt,bottom=13pt]
+{\sffamily\bfseries\color{brandnavy}\Large Mohammed Hyder Ali}\\[1pt]
+{\sffamily\bfseries\color{brandaccent}Project Lead \textperiodcentered{} Backend \& Systems Architecture}\\[7pt]
+Responsible for the Django and PostgreSQL back end, the role and permission system, the
+inventory and stock engine, Stripe payment integration, the delivery-zone logic and
+overall system architecture. Primary point of contact for project governance and
+delivery scheduling.\\[8pt]
+{\sffamily\bfseries\color{brandnavy}Telephone \& chat:}\quad +91 8639264454
+\end{tcolorbox}
+
+\vspace{10pt}
+
+\begin{tcolorbox}[enhanced,colback=brandlight,colframe=brandnavy,boxrule=0pt,leftrule=3.5pt,
+  arc=0pt,outer arc=0pt,left=16pt,right=16pt,top=13pt,bottom=13pt]
+{\sffamily\bfseries\color{brandnavy}\Large Om Verma}\\[1pt]
+{\sffamily\bfseries\color{brandaccent}Product Engineering \textperiodcentered{} Front-End \& Experience Architecture}\\[7pt]
+Responsible for the Next.js and React front end across the customer storefront, admin
+console, kitchen, dispatch and rider interfaces; the design system and motion design; the
+real-time tracking experience; and analytics and reporting interfaces. Primary point of
+contact for design, user experience and front-end delivery.\\[8pt]
+{\sffamily\bfseries\color{brandnavy}Telephone \& chat:}\quad +91 6281704551\\[3pt]
+{\sffamily\bfseries\color{brandnavy}Portfolio:}\quad \href{https://omverma-portfolio.netlify.app/}{omverma-portfolio.netlify.app}
+\end{tcolorbox}
+
+\vspace{14pt}
+
+\subsection{How to reach us during the engagement}
+
+\begin{tabularx}{\linewidth}{@{}L{0.30\linewidth}Y@{}}
+\toprule
+\hdrow \thead{Channel} & \thead{Availability} \\
+\midrule
+Telephone & Monday to Friday, 10:00--18:00 IST (05:30--13:30 UK, BST) \\
+\altrow Chat & Monday to Friday, 10:00--18:00 IST --- typically answered within the hour \\
+Email & Any time. Responded to within one working day \\
+\altrow Weekly progress report & Every Friday, in writing, for the duration of the project \\
+Critical incidents (P1) & Best-effort cover to 22:00 UK time, seven days a week, during
+the 60-day support period \\
+\bottomrule
+\end{tabularx}
+
+\vspace{10pt}
+\noindent\begin{minipage}{\linewidth}
+{\color{brandline}\rule{\linewidth}{1pt}}\\[6pt]
+\begin{center}
+{\sffamily\bfseries\color{brandnavy}\large Thank you for the opportunity.}\\[5pt]
+{\color{brandgrey}\parbox{0.90\linewidth}{\centering
+We would rather have a difficult conversation about scope now than a difficult one about
+a missed date in week six. If anything here is unclear or wrong, please tell us ---
+changes before sign-off cost you nothing.}}\\[8pt]
+{\sffamily\color{brandaccent}\small Mohammed Hyder Ali \quad\textbullet\quad Om Verma}
+\end{center}
+\end{minipage}
+
+\end{document}
